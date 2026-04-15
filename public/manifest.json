@@ -1,0 +1,52 @@
+{
+  "name": "Akanut - Recettes personnalisées",
+  "short_name": "Akanut",
+  "description": "Des recettes saines avec vos ingrédients disponibles",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2d5a3d",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Générer des recettes",
+      "short_name": "Recettes",
+      "description": "Générer des recettes avec vos ingrédients",
+      "url": "/?action=generate",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Liste de courses",
+      "short_name": "Courses",
+      "description": "Voir ma liste de courses",
+      "url": "/?action=shopping",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Favoris",
+      "short_name": "Favoris",
+      "description": "Mes recettes favorites",
+      "url": "/?action=favorites",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "96x96" }]
+    }
+  ],
+  "categories": ["food", "lifestyle", "utilities"],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
