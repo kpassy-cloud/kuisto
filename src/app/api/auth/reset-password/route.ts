@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     const emailTemplate = getPasswordResetEmailTemplate(resetUrl, user.name)
     const emailResult = await sendEmail({
       to: email.toLowerCase(),
-      subject: 'Akanut - Réinitialisation de votre mot de passe',
+      subject: 'Kuisto - Réinitialisation de votre mot de passe',
       html: emailTemplate.html,
       text: emailTemplate.text
     })

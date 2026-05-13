@@ -448,7 +448,7 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
               </div>
               <div>
                 <h1 className="font-serif text-xl font-bold">{t('dashboard')}</h1>
-                <p className="text-sm text-white/80">Akanut Administration</p>
+                <p className="text-sm text-white/80">Kuisto Administration</p>
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-white/20">

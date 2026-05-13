@@ -127,7 +127,7 @@ export function RecipeDetailModal({
             </ol>
           ` : ''}
           <div class="footer">
-            ${language === 'fr' ? 'Imprimé depuis Akanut' : 'Printed from Akanut'} - ${new Date().toLocaleDateString()}
+            ${language === 'fr' ? 'Imprimé depuis Kuisto' : 'Printed from Kuisto'} - ${new Date().toLocaleDateString()}
           </div>
         </body>
       </html>

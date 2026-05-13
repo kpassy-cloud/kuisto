@@ -13,6 +13,6 @@
     <path d="M340 340c-20 35-60 50-100 40 10-20 25-35 45-45 20-10 40-10 55 5z" fill="#7cb342"/>
     <path d="M340 340c-5 10-15 18-25 25" stroke="#5d8c2e" stroke-width="3" fill="none"/>
   </g>
-  <!-- Akanut text hint -->
-  <text x="256" y="450" text-anchor="middle" fill="white" font-family="Georgia, serif" font-size="36" font-weight="bold" opacity="0.9">Akanut</text>
+  <!-- Kuisto text hint -->
+  <text x="256" y="450" text-anchor="middle" fill="white" font-family="Georgia, serif" font-size="36" font-weight="bold" opacity="0.9">Kuisto</text>
 </svg>

@@ -94,7 +94,7 @@ export function SignupInvitationModal({ isOpen, onClose, onSignup }: SignupInvit
             </motion.div>
             
             <h2 className="font-serif text-2xl font-bold text-white mb-2">
-              {language === 'fr' ? 'Rejoignez Akanut !' : 'Join Akanut!'}
+              {language === 'fr' ? 'Rejoignez Kuisto !' : 'Join Kuisto!'}
             </h2>
             <p className="text-white/80">
               {language === 'fr' 

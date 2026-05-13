@@ -51,8 +51,8 @@ const plans = [
   {
     id: 'premium',
     name: { fr: 'Premium', en: 'Premium' },
-    price: { fr: '$4.99', en: '$4.99' },
-    period: { fr: '/mois USD', en: '/month USD' },
+    price: { fr: '$6.99 CA', en: '$6.99 CA' },
+    period: { fr: '/mois', en: '/month' },
     features: [
       { fr: 'Recettes illimitées', en: 'Unlimited recipes' },
       { fr: 'Planificateur avancé', en: 'Advanced planner' },
@@ -71,8 +71,8 @@ const plans = [
   {
     id: 'pro',
     name: { fr: 'Pro', en: 'Pro' },
-    price: { fr: '$9.99', en: '$9.99' },
-    period: { fr: '/mois USD', en: '/month USD' },
+    price: { fr: '$12.99 CA', en: '$12.99 CA' },
+    period: { fr: '/mois', en: '/month' },
     features: [
       { fr: 'Tout de Premium', en: 'Everything in Premium' },
       { fr: 'API Access', en: 'API Access' },

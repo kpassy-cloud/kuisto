@@ -110,7 +110,7 @@ self.addEventListener('fetch', (event) => {
 // Handle push notifications
 self.addEventListener('push', (event) => {
   const data = event.data?.json() ?? {}
-  const title = data.title || 'Akanut'
+  const title = data.title || 'Kuisto'
   const options = {
     body: data.body || 'Nouvelle notification',
     icon: '/icons/icon-192x192.png',

@@ -3,7 +3,7 @@
 export const translations = {
   fr: {
     // App
-    appName: 'Akanut',
+    appName: 'Kuisto',
     appTagline: 'Recettes personnalisées',
     
     // Navigation
@@ -179,7 +179,7 @@ export const translations = {
   
   en: {
     // App
-    appName: 'Akanut',
+    appName: 'Kuisto',
     appTagline: 'Personalized Recipes',
     
     // Navigation

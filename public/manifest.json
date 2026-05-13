@@ -1,6 +1,6 @@
 {
-  "name": "Akanut - Recettes personnalisées",
-  "short_name": "Akanut",
+  "name": "Kuisto - Recettes personnalisées",
+  "short_name": "Kuisto",
   "description": "Des recettes saines avec vos ingrédients disponibles",
   "start_url": "/",
   "display": "standalone",

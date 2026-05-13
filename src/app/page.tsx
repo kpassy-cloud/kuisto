@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Moon, Sun, Heart, Settings, ShoppingCart, Leaf, ChefHat, Calendar, Crown, Shield, ArrowRight, UtensilsCrossed } from 'lucide-react'
+import { Moon, Sun, Heart, Settings, ShoppingCart, Leaf, ChefHat, Calendar, Crown, Shield, ArrowRight, UtensilsCrossed, User } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { useTheme } from 'next-themes'
 import { ShoppingListPanel } from '@/components/shopping-list-panel'
@@ -28,6 +28,9 @@ import { SearchBar } from '@/components/search-bar'
 import { RecipeDetailModal } from '@/components/recipe-detail-modal'
 import { NewsFeedHero } from '@/components/news-feed-hero'
 import { SignupInvitationModal } from '@/components/signup-invitation-modal'
+import { PremiumLockModal } from '@/components/premium-lock-modal'
+import { VideoAdModal } from '@/components/video-ad-modal'
+import { NativeAdBanner } from '@/components/native-ad-banner'
 import { useEngagementTracker } from '@/lib/hooks/useEngagementTracker'
 import { useAuth } from '@/lib/hooks/useAuth'
 
@@ -98,11 +101,58 @@ export default function Home() {
   
   // Demo mode state
   const [isDemoMode, setIsDemoMode] = useState(false)
+  
+  // Guest state (for freemium model)
+  const [guestId, setGuestId] = useState<string | null>(null)
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null)
+  const [unlockedFeatures, setUnlockedFeatures] = useState<Set<string>>(new Set())
+  
+  // Premium lock modal state
+  const [showPremiumLock, setShowPremiumLock] = useState(false)
+  const [premiumFeature, setPremiumFeature] = useState<{ name: string; description?: string }>({ name: '' })
+  const [showVideoAd, setShowVideoAd] = useState(false)
+  const [pendingFeatureUnlock, setPendingFeatureUnlock] = useState<string | null>(null)
 
   // Initialize
   useEffect(() => {
     setMounted(true)
-  }, [])
+    
+    // Initialize guest session if not authenticated
+    if (!isAuthenticated) {
+      const storedGuestId = localStorage.getItem('kuisto_guest_id')
+      const storedSessionStart = localStorage.getItem('kuisto_session_start')
+      const storedUnlocked = localStorage.getItem('kuisto_unlocked_features')
+      
+      if (storedGuestId) {
+        setGuestId(storedGuestId)
+      } else {
+        const newGuestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        localStorage.setItem('kuisto_guest_id', newGuestId)
+        setGuestId(newGuestId)
+      }
+      
+      if (storedSessionStart) {
+        setSessionStartTime(new Date(storedSessionStart))
+      } else {
+        const now = new Date()
+        localStorage.setItem('kuisto_session_start', now.toISOString())
+        setSessionStartTime(now)
+      }
+      
+      if (storedUnlocked) {
+        try {
+          const unlocked = JSON.parse(storedUnlocked)
+          // Filter out expired unlocks (24h)
+          const validUnlocks = Object.entries(unlocked).filter(
+            ([_, expiry]) => new Date(expiry as string) > new Date()
+          )
+          setUnlockedFeatures(new Set(validUnlocks.map(([feature]) => feature)))
+        } catch {
+          // Invalid data, ignore
+        }
+      }
+    }
+  }, [isAuthenticated])
 
   // Show signup prompt based on engagement
   useEffect(() => {
@@ -425,8 +475,60 @@ export default function Home() {
     
     toast({
       title: language === 'fr' ? 'Compte créé !' : 'Account created!',
-      description: language === 'fr' ? 'Bienvenue sur Akanut !' : 'Welcome to Akanut!'
+      description: language === 'fr' ? 'Bienvenue sur Kuisto !' : 'Welcome to Kuisto!'
     })
+  }
+
+  // Freemium: Check if feature is locked
+  const isFeatureLocked = (featureId: string): boolean => {
+    if (isAuthenticated) return false // Authenticated users have access
+    return !unlockedFeatures.has(featureId)
+  }
+
+  // Freemium: Show premium lock modal
+  const showPremiumLockModal = (featureName: string, featureDescription?: string, featureId?: string) => {
+    setPremiumFeature({ name: featureName, description: featureDescription })
+    setPendingFeatureUnlock(featureId || null)
+    setShowPremiumLock(true)
+  }
+
+  // Freemium: Handle watching ad to unlock feature
+  const handleWatchAd = () => {
+    setShowPremiumLock(false)
+    setShowVideoAd(true)
+  }
+
+  // Freemium: Handle ad completion
+  const handleAdComplete = () => {
+    if (pendingFeatureUnlock) {
+      // Unlock for 24 hours
+      const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000)
+      setUnlockedFeatures(prev => {
+        const newSet = new Set(prev)
+        newSet.add(pendingFeatureUnlock)
+        // Save to localStorage
+        const unlockedObj: Record<string, string> = {}
+        newSet.forEach(f => {
+          unlockedObj[f] = expiry.toISOString()
+        })
+        localStorage.setItem('kuisto_unlocked_features', JSON.stringify(unlockedObj))
+        return newSet
+      })
+      
+      toast({
+        title: language === 'fr' ? 'Fonctionnalité débloquée !' : 'Feature unlocked!',
+        description: language === 'fr' 
+          ? 'Vous pouvez utiliser cette fonctionnalité pendant 24 heures.'
+          : 'You can use this feature for 24 hours.'
+      })
+    }
+    setPendingFeatureUnlock(null)
+  }
+
+  // Freemium: Handle upgrade click
+  const handleUpgradeClick = () => {
+    setShowPremiumLock(false)
+    setShowSubscription(true)
   }
 
   return (
@@ -565,7 +667,59 @@ export default function Home() {
             onSignUpClick={() => setShowAuthModal(true)}
             isAuthenticated={isAuthenticated}
           />
+          
+          {/* Native Ad for non-authenticated users */}
+          {!isAuthenticated && (
+            <div className="mt-6">
+              <NativeAdBanner position="top" />
+            </div>
+          )}
         </section>
+
+        {/* Guest CTA Section - Encourage sign up */}
+        {!isAuthenticated && (
+          <section className="container mx-auto px-4 py-8">
+            <div className="grid md:grid-cols-2 gap-6 items-center">
+              <div>
+                <h2 className="font-serif text-3xl font-bold text-foreground mb-4">
+                  {language === 'fr' 
+                    ? 'Créez des recettes avec vos ingrédients' 
+                    : 'Create recipes with your ingredients'}
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  {language === 'fr'
+                    ? 'Inscrivez-vous gratuitement pour générer des recettes personnalisées basées sur ce que vous avez dans votre cuisine.'
+                    : 'Sign up for free to generate personalized recipes based on what you have in your kitchen.'}
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    onClick={() => setShowAuthModal(true)}
+                    className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    {language === 'fr' ? 'Créer un compte gratuit' : 'Create free account'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => showPremiumLockModal(
+                      language === 'fr' ? 'Génération de recettes' : 'Recipe generation',
+                      language === 'fr' 
+                        ? 'Regardez une publicité pour générer des recettes sans créer de compte'
+                        : 'Watch an ad to generate recipes without creating an account',
+                      'recipe_generation'
+                    )}
+                  >
+                    <Crown className="w-4 h-4 mr-2" />
+                    {language === 'fr' ? 'Essayer gratuitement' : 'Try for free'}
+                  </Button>
+                </div>
+              </div>
+              <div>
+                <NativeAdBanner position="middle" />
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* RECIPE SECTION - Secondary, requires auth */}
         <AnimatePresence>
@@ -709,6 +863,24 @@ export default function Home() {
         onClose={() => setShowAdminDashboard(false)}
       />
 
+      {/* Premium Lock Modal */}
+      <PremiumLockModal
+        isOpen={showPremiumLock}
+        onClose={() => setShowPremiumLock(false)}
+        featureName={premiumFeature.name}
+        featureDescription={premiumFeature.description}
+        onWatchAd={handleWatchAd}
+        onUpgrade={handleUpgradeClick}
+      />
+
+      {/* Video Ad Modal */}
+      <VideoAdModal
+        isOpen={showVideoAd}
+        onClose={() => setShowVideoAd(false)}
+        onComplete={handleAdComplete}
+        duration={30}
+      />
+
       {/* Footer */}
       <footer className="mt-auto border-t bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-6">
@@ -717,7 +889,7 @@ export default function Home() {
               <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary to-terracotta text-primary-foreground">
                 <ChefHat className="w-4 h-4" />
               </div>
-              <span className="font-serif font-semibold text-foreground">Akanut</span>
+              <span className="font-serif font-semibold text-foreground">Kuisto</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Leaf className="w-4 h-4 text-success" />

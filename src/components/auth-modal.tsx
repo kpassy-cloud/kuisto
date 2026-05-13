@@ -102,7 +102,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     } else {
       toast({
         title: language === 'fr' ? 'Connexion réussie' : 'Login successful',
-        description: language === 'fr' ? 'Bienvenue sur Akanut !' : 'Welcome to Akanut!'
+        description: language === 'fr' ? 'Bienvenue sur Kuisto !' : 'Welcome to Kuisto!'
       })
       onClose()
       resetForm()
@@ -164,7 +164,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       } else {
         toast({
           title: language === 'fr' ? 'Compte créé !' : 'Account created!',
-          description: language === 'fr' ? 'Bienvenue sur Akanut !' : 'Welcome to Akanut!'
+          description: language === 'fr' ? 'Bienvenue sur Kuisto !' : 'Welcome to Kuisto!'
         })
         onClose()
         resetForm()
@@ -331,7 +331,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 ? (language === 'fr' ? 'Mot de passe oublié' : 'Forgot password')
                 : view === 'reset-password'
                   ? (language === 'fr' ? 'Réinitialiser le mot de passe' : 'Reset password')
-                  : (language === 'fr' ? 'Bienvenue sur Akanut' : 'Welcome to Akanut')
+                  : (language === 'fr' ? 'Bienvenue sur Kuisto' : 'Welcome to Kuisto')
               }
             </h2>
             <p className="text-sm text-muted-foreground mt-1">

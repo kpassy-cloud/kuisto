@@ -42,7 +42,7 @@ export async function sendEmail({ to, subject, html, text }: EmailOptions): Prom
 
   try {
     const { data, error } = await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'Akanut <noreply@akanut.com>',
+      from: process.env.EMAIL_FROM || 'Kuisto <noreply@kuisto.com>',
       to,
       subject,
       html,
@@ -85,7 +85,7 @@ export function getPasswordResetEmailTemplate(
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">🧑‍🍳 Akanut</h1>
+        <h1 style="color: white; margin: 0; font-size: 28px;">🧑‍🍳 Kuisto</h1>
         <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0;">Des recettes saines avec vos ingrédients</p>
       </div>
       
@@ -97,7 +97,7 @@ export function getPasswordResetEmailTemplate(
         </p>
         
         <p style="color: #4b5563;">
-          Nous avons reçu une demande de réinitialisation de votre mot de passe pour votre compte Akanut.
+          Nous avons reçu une demande de réinitialisation de votre mot de passe pour votre compte Kuisto.
         </p>
         
         <div style="text-align: center; margin: 30px 0;">
@@ -124,7 +124,7 @@ export function getPasswordResetEmailTemplate(
       </div>
       
       <div style="text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px;">
-        <p>© ${new Date().getFullYear()} Akanut. Tous droits réservés.</p>
+        <p>© ${new Date().getFullYear()} Kuisto. Tous droits réservés.</p>
         <p>Cet email a été envoyé à titre informatif uniquement.</p>
       </div>
     </body>
@@ -132,11 +132,11 @@ export function getPasswordResetEmailTemplate(
   `
 
   const text = `
-Akanut - Réinitialisation de votre mot de passe
+Kuisto - Réinitialisation de votre mot de passe
 
 Bonjour ${userName || 'cher utilisateur'},
 
-Nous avons reçu une demande de réinitialisation de votre mot de passe pour votre compte Akanut.
+Nous avons reçu une demande de réinitialisation de votre mot de passe pour votre compte Kuisto.
 
 Pour réinitialiser votre mot de passe, cliquez sur le lien suivant :
 ${resetUrl}
@@ -145,7 +145,7 @@ Ce lien expire dans 1 heure.
 
 Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.
 
-© ${new Date().getFullYear()} Akanut
+© ${new Date().getFullYear()} Kuisto
   `.trim()
 
   return { html, text }
@@ -161,16 +161,16 @@ export function getWelcomeEmailTemplate(
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Bienvenue sur Akanut !</title>
+      <title>Bienvenue sur Kuisto !</title>
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">🧑‍🍳 Akanut</h1>
+        <h1 style="color: white; margin: 0; font-size: 28px;">🧑‍🍳 Kuisto</h1>
         <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0;">Des recettes saines avec vos ingrédients</p>
       </div>
       
       <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb; border-top: none;">
-        <h2 style="color: #1f2937; margin-top: 0;">Bienvenue ${userName || 'chez Akanut'} ! 🎉</h2>
+        <h2 style="color: #1f2937; margin-top: 0;">Bienvenue ${userName || 'chez Kuisto'} ! 🎉</h2>
         
         <p style="color: #4b5563;">
           Merci d'avoir créé votre compte. Vous pouvez maintenant :
@@ -189,20 +189,20 @@ export function getWelcomeEmailTemplate(
       </div>
       
       <div style="text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px;">
-        <p>© ${new Date().getFullYear()} Akanut. Tous droits réservés.</p>
+        <p>© ${new Date().getFullYear()} Kuisto. Tous droits réservés.</p>
       </div>
     </body>
     </html>
   `
 
   const text = `
-Bienvenue sur Akanut !
+Bienvenue sur Kuisto !
 
 Bonjour ${userName || 'cher utilisateur'},
 
 Merci d'avoir créé votre compte. Vous pouvez maintenant générer des recettes personnalisées, sauvegarder vos favoris, planifier vos repas et plus encore !
 
-© ${new Date().getFullYear()} Akanut
+© ${new Date().getFullYear()} Kuisto
   `.trim()
 
   return { html, text }

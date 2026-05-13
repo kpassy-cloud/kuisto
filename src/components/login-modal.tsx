@@ -72,7 +72,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 <ChefHat className="w-8 h-8" />
               </div>
               
-              <h2 className="font-serif text-2xl font-bold">Bienvenue sur Akanut</h2>
+              <h2 className="font-serif text-2xl font-bold">Bienvenue sur Kuisto</h2>
               <p className="text-sm text-muted-foreground mt-1">
                 Connectez-vous pour sauvegarder vos recettes
               </p>

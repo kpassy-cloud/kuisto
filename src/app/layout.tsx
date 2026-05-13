@@ -21,23 +21,23 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Akanut — Recettes Saines & Personnalisées",
+  title: "Kuisto — Recettes Saines & Personnalisées",
   description: "Générez des recettes délicieuses et nutritives avec les ingrédients que vous avez. Application de cuisine intelligente avec filtres diététiques, nutrition et favoris.",
-  keywords: ["cuisine", "recettes", "sain", "nutrition", "ingrédients", "végétarien", "sans gluten", "recettes rapides", "akanut"],
-  authors: [{ name: "Akanut" }],
+  keywords: ["cuisine", "recettes", "sain", "nutrition", "ingrédients", "végétarien", "sans gluten", "recettes rapides", "kuisto"],
+  authors: [{ name: "Kuisto" }],
   manifest: "/manifest.json",
   icons: {
     icon: "/icons/icon.svg",
     apple: "/icons/icon.svg",
   },
   openGraph: {
-    title: "Akanut — Recettes Saines",
+    title: "Kuisto — Recettes Saines",
     description: "Transformez vos ingrédients en recettes délicieuses avec calcul nutritionnel automatique",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Akanut",
+    title: "Kuisto",
     description: "Des recettes saines avec vos ingrédients",
   },
 };
@@ -53,7 +53,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#2d5a3d" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Akanut" />
+        <meta name="apple-mobile-web-app-title" content="Kuisto" />
         <link rel="apple-touch-icon" href="/icons/icon.svg" />
       </head>
       <body
