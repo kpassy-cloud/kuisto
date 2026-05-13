@@ -395,3 +395,31 @@ model AdminLog {
   @@index([adminId])
   @@index([targetType, targetId])
 }
+
+// Admin keys for promoting users to admin
+model AdminKey {
+  id          String   @id @default(cuid())
+  
+  key         String   @unique  // The actual key string
+  name        String?           // Human-readable name (e.g., "Marketing Team Key")
+  description String?           // Description of who should use this key
+  
+  // Usage tracking
+  usedBy      String?           // User ID who used this key
+  usedAt      DateTime?
+  maxUses     Int      @default(1)  // Maximum number of times this key can be used
+  useCount    Int      @default(0)  // Current number of uses
+  
+  // Validity
+  active      Boolean  @default(true)
+  expiresAt   DateTime?
+  
+  // Creator
+  createdBy   String?  // Admin user ID who created this key
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([key])
+  @@index([active])
+}

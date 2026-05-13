@@ -12,7 +12,7 @@ import {
   Plus, Edit, Trash2, Search, Filter, Eye, MousePointer, Gift,
   Settings, Bell, Globe, MapPin, Calendar, Clock, Check, AlertCircle,
   ChevronDown, ChevronUp, RefreshCw, Download, ExternalLink,
-  DollarSign, Activity, Target, Zap
+  DollarSign, Activity, Target, Zap, Key, Copy
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { toast } from '@/hooks/use-toast'
@@ -22,7 +22,7 @@ interface AdminDashboardProps {
   onClose: () => void
 }
 
-type Tab = 'overview' | 'users' | 'ads' | 'feed' | 'announcements' | 'analytics'
+type Tab = 'overview' | 'users' | 'ads' | 'feed' | 'announcements' | 'analytics' | 'keys'
 
 interface User {
   id: string
@@ -109,6 +109,20 @@ interface Analytics {
   }>
 }
 
+interface AdminKey {
+  id: string
+  key: string
+  name: string | null
+  description: string | null
+  active: boolean
+  maxUses: number
+  useCount: number
+  expiresAt: string | null
+  usedBy: string | null
+  usedAt: string | null
+  createdAt: string
+}
+
 export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
   const { language } = useI18n()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
@@ -120,6 +134,7 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
   const [feed, setFeed] = useState<FeedItem[]>([])
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
+  const [adminKeys, setAdminKeys] = useState<AdminKey[]>([])
   
   // Search/filter states
   const [userSearch, setUserSearch] = useState('')
@@ -155,6 +170,9 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
         break
       case 'analytics':
         fetchAnalytics()
+        break
+      case 'keys':
+        fetchAdminKeys()
         break
     }
   }, [activeTab])
@@ -226,6 +244,72 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const fetchAdminKeys = async () => {
+    setIsLoading(true)
+    try {
+      const res = await fetch('/api/admin/keys')
+      const data = await res.json()
+      setAdminKeys(data.keys || [])
+    } catch (err) {
+      console.error('Failed to fetch admin keys:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Admin key actions
+  const handleCreateAdminKey = async (name: string, description: string, maxUses: number) => {
+    try {
+      const res = await fetch('/api/admin/keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description, maxUses })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        toast({ 
+          title: language === 'fr' ? 'Clé créée !' : 'Key created!',
+          description: data.key.key
+        })
+        fetchAdminKeys()
+      }
+    } catch (err) {
+      toast({ title: language === 'fr' ? 'Erreur' : 'Error', variant: 'destructive' })
+    }
+  }
+
+  const handleDeleteAdminKey = async (keyId: string) => {
+    if (!confirm(language === 'fr' ? 'Supprimer cette clé ?' : 'Delete this key?')) return
+    try {
+      await fetch('/api/admin/keys', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyId })
+      })
+      fetchAdminKeys()
+    } catch (err) {
+      console.error('Failed to delete admin key:', err)
+    }
+  }
+
+  const handleToggleAdminKey = async (keyId: string, active: boolean) => {
+    try {
+      await fetch('/api/admin/keys', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyId, active })
+      })
+      fetchAdminKeys()
+    } catch (err) {
+      console.error('Failed to toggle admin key:', err)
+    }
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast({ title: language === 'fr' ? 'Copié !' : 'Copied!' })
   }
 
   // User actions
@@ -417,6 +501,7 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
   const tabs: { id: Tab; icon: React.ReactNode; label: string }[] = [
     { id: 'overview', icon: <BarChart3 className="w-4 h-4" />, label: t('overview') },
     { id: 'users', icon: <Users className="w-4 h-4" />, label: t('users') },
+    { id: 'keys', icon: <Key className="w-4 h-4" />, label: language === 'fr' ? 'Clés Admin' : 'Admin Keys' },
     { id: 'ads', icon: <Megaphone className="w-4 h-4" />, label: t('ads') },
     { id: 'feed', icon: <Newspaper className="w-4 h-4" />, label: t('feed') },
     { id: 'announcements', icon: <Bell className="w-4 h-4" />, label: t('announcements') },
@@ -949,6 +1034,131 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
                         </div>
                       </CardContent>
                     </Card>
+                  </div>
+                </div>
+              )}
+
+              {/* Admin Keys Tab */}
+              {activeTab === 'keys' && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h2 className="font-serif text-xl font-bold">{language === 'fr' ? 'Clés d\'administration' : 'Admin Keys'}</h2>
+                      <p className="text-sm text-muted-foreground">
+                        {language === 'fr' 
+                          ? 'Générez des clés pour permettre aux utilisateurs de devenir administrateurs'
+                          : 'Generate keys to allow users to become administrators'}
+                      </p>
+                    </div>
+                    <Button onClick={() => {
+                      const name = prompt(language === 'fr' ? 'Nom de la clé (optionnel):' : 'Key name (optional):')
+                      if (name === null) return
+                      const description = prompt(language === 'fr' ? 'Description (optionnel):' : 'Description (optional):')
+                      if (description === null) return
+                      const maxUses = parseInt(prompt(language === 'fr' ? 'Nombre d\'utilisations max (défaut: 1):' : 'Max uses (default: 1):') || '1')
+                      handleCreateAdminKey(name, description, maxUses)
+                    }}>
+                      <Plus className="w-4 h-4 mr-1" />
+                      {language === 'fr' ? 'Créer une clé' : 'Create Key'}
+                    </Button>
+                  </div>
+
+                  {/* Default key info */}
+                  <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <Key className="w-5 h-5 text-blue-500 mt-0.5" />
+                        <div>
+                          <h3 className="font-medium text-blue-700 dark:text-blue-300">
+                            {language === 'fr' ? 'Clé par défaut' : 'Default Key'}
+                          </h3>
+                          <p className="text-sm text-blue-600 dark:text-blue-400 mb-2">
+                            {language === 'fr' 
+                              ? 'Cette clé fonctionne toujours pour promouvoir des utilisateurs:'
+                              : 'This key always works to promote users:'}
+                          </p>
+                          <code className="bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded text-sm font-mono">
+                            kuisto-admin-2024
+                          </code>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Keys list */}
+                  <div className="grid gap-4">
+                    {adminKeys.length === 0 ? (
+                      <Card>
+                        <CardContent className="p-8 text-center text-muted-foreground">
+                          <Key className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                          <p>{language === 'fr' ? 'Aucune clé personnalisée' : 'No custom keys'}</p>
+                          <p className="text-sm">{language === 'fr' ? 'Créez une clé pour commencer' : 'Create a key to get started'}</p>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      adminKeys.map(key => (
+                        <Card key={key.id} className={!key.active ? 'opacity-60' : ''}>
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h3 className="font-medium">{key.name || language === 'fr' ? 'Clé sans nom' : 'Unnamed key'}</h3>
+                                  <Badge variant={key.active ? 'default' : 'secondary'}>
+                                    {key.active ? (language === 'fr' ? 'Active' : 'Active') : (language === 'fr' ? 'Inactive' : 'Inactive')}
+                                  </Badge>
+                                  {key.expiresAt && new Date(key.expiresAt) < new Date() && (
+                                    <Badge variant="destructive">{language === 'fr' ? 'Expirée' : 'Expired'}</Badge>
+                                  )}
+                                </div>
+                                {key.description && (
+                                  <p className="text-sm text-muted-foreground mb-2">{key.description}</p>
+                                )}
+                                <div className="flex items-center gap-2 mb-3">
+                                  <code className="bg-muted px-2 py-1 rounded text-sm font-mono flex-1">
+                                    {key.key}
+                                  </code>
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost"
+                                    onClick={() => copyToClipboard(key.key)}
+                                  >
+                                    <Copy className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-1">
+                                    <span>{language === 'fr' ? 'Utilisations:' : 'Uses:'}</span>
+                                    <span className="font-medium">{key.useCount} / {key.maxUses}</span>
+                                  </div>
+                                  {key.usedAt && (
+                                    <div className="flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      {language === 'fr' ? 'Utilisée le:' : 'Used on:'} {new Date(key.usedAt).toLocaleDateString()}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 ml-4">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleToggleAdminKey(key.id, !key.active)}
+                                >
+                                  {key.active ? (language === 'fr' ? 'Désactiver' : 'Deactivate') : (language === 'fr' ? 'Activer' : 'Activate')}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleDeleteAdminKey(key.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
                   </div>
                 </div>
               )}

@@ -16,7 +16,7 @@ interface AdminSetupProps {
 
 export function AdminSetup({ userEmail, isAdmin, onAdminStatusChange }: AdminSetupProps) {
   const { language } = useI18n()
-  const [secretKey, setSecretKey] = useState('akanut-admin-2024')
+  const [secretKey, setSecretKey] = useState('kuisto-admin-2024')
   const [isLoading, setIsLoading] = useState(false)
   const [adminCount, setAdminCount] = useState(0)
   

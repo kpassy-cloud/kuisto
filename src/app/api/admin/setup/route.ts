@@ -1,21 +1,52 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
-// This route allows promoting a user to admin
-// In production, this should be protected or removed after initial setup
+// This route allows promoting a user to admin using a key
 export async function POST(request: Request) {
   try {
     const { email, secretKey } = await request.json()
     
-    // Simple protection - in production use proper authentication
-    // You can set ADMIN_SETUP_KEY in your environment
-    const setupKey = process.env.ADMIN_SETUP_KEY || 'akanut-admin-2024'
+    // Default setup key (fallback)
+    const defaultSetupKey = process.env.ADMIN_SETUP_KEY || 'kuisto-admin-2024'
     
-    if (secretKey !== setupKey) {
-      return NextResponse.json(
-        { error: 'Invalid setup key' },
-        { status: 403 }
-      )
+    // Check if key matches default
+    const isDefaultKey = secretKey === defaultSetupKey
+    
+    // If not default, check database for valid keys
+    let dbKey = null
+    if (!isDefaultKey) {
+      dbKey = await db.adminKey.findUnique({
+        where: { key: secretKey }
+      })
+      
+      // Validate database key
+      if (!dbKey) {
+        return NextResponse.json(
+          { error: 'Invalid setup key' },
+          { status: 403 }
+        )
+      }
+      
+      if (!dbKey.active) {
+        return NextResponse.json(
+          { error: 'This key has been deactivated' },
+          { status: 403 }
+        )
+      }
+      
+      if (dbKey.expiresAt && new Date(dbKey.expiresAt) < new Date()) {
+        return NextResponse.json(
+          { error: 'This key has expired' },
+          { status: 403 }
+        )
+      }
+      
+      if (dbKey.useCount >= dbKey.maxUses) {
+        return NextResponse.json(
+          { error: 'This key has reached its maximum uses' },
+          { status: 403 }
+        )
+      }
     }
     
     if (!email) {
@@ -37,9 +68,36 @@ export async function POST(request: Request) {
       )
     }
     
+    // Update user role
     const updatedUser = await db.user.update({
       where: { email },
       data: { role: 'admin' }
+    })
+    
+    // If database key was used, update its usage
+    if (dbKey) {
+      await db.adminKey.update({
+        where: { id: dbKey.id },
+        data: {
+          useCount: { increment: 1 },
+          usedBy: user.id,
+          usedAt: new Date()
+        }
+      })
+    }
+    
+    // Log this action
+    await db.adminLog.create({
+      data: {
+        adminId: user.id,
+        action: 'user_promoted_to_admin',
+        targetType: 'user',
+        targetId: user.id,
+        details: JSON.stringify({ 
+          email, 
+          keySource: dbKey ? 'database' : 'default' 
+        })
+      }
     })
     
     return NextResponse.json({
