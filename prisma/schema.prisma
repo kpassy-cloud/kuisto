@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// NextAuth.js models
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -24,8 +20,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -47,379 +42,270 @@ model VerificationToken {
 }
 
 model User {
-  id            String      @id @default(cuid())
-  email         String      @unique
+  id            String           @id @default(cuid())
+  email         String           @unique
   emailVerified DateTime?
   name          String?
   image         String?
-  password      String?     // Hashed password for credentials auth
-  role          String      @default("user") // user, admin
-  country       String?     // Country code for geolocation (CA, FR, US, etc.)
-  region        String?     // Region/Province for targeted ads
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  
-  // Relations
+  password      String?
+  role          String           @default("user")
+  country       String?
+  region        String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
   accounts      Account[]
-  sessions      Session[]
-  preferences   UserPreferences?
+  adImpressions AdImpression[]
   favorites     Favorite[]
-  history       RecipeHistory[]
   mealPlans     MealPlan[]
+  history       RecipeHistory[]
+  sessions      Session[]
   subscription  Subscription?
   bonuses       UserBonus[]
-  adImpressions AdImpression[]
+  preferences   UserPreferences?
 }
 
 model UserPreferences {
-  id                    String   @id @default(cuid())
-  userId                String   @unique
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Dietary preferences
-  vegetarian            Boolean  @default(false)
-  vegan                 Boolean  @default(false)
-  glutenFree            Boolean  @default(false)
-  lactoseFree           Boolean  @default(false)
-  keto                  Boolean  @default(false)
-  halal                 Boolean  @default(false)
-  kosher                Boolean  @default(false)
-  
-  // Allergies
-  nutAllergy            Boolean  @default(false)
-  peanutAllergy         Boolean  @default(false)
-  shellfishAllergy      Boolean  @default(false)
-  eggAllergy            Boolean  @default(false)
-  soyAllergy            Boolean  @default(false)
-  fishAllergy           Boolean  @default(false)
-  
-  // Preferences
-  servingSize           Int      @default(2)
-  difficultyLevel       String   @default("easy") // easy, medium, hard
-  maxPrepTime           Int      @default(30) // in minutes
-  
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  vegetarian       Boolean  @default(false)
+  vegan            Boolean  @default(false)
+  glutenFree       Boolean  @default(false)
+  lactoseFree      Boolean  @default(false)
+  keto             Boolean  @default(false)
+  halal            Boolean  @default(false)
+  kosher           Boolean  @default(false)
+  nutAllergy       Boolean  @default(false)
+  peanutAllergy    Boolean  @default(false)
+  shellfishAllergy Boolean  @default(false)
+  eggAllergy       Boolean  @default(false)
+  soyAllergy       Boolean  @default(false)
+  fishAllergy      Boolean  @default(false)
+  servingSize      Int      @default(2)
+  difficultyLevel  String   @default("easy")
+  maxPrepTime      Int      @default(30)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Favorite {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Recipe data (stored as JSON for flexibility)
-  recipeName    String
-  recipeData    String   // JSON string of the full recipe
-  
-  createdAt     DateTime @default(now())
-  
+  id         String   @id @default(cuid())
+  userId     String
+  recipeName String
+  recipeData String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, recipeName])
 }
 
 model RecipeHistory {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Recipe data
-  recipeName    String
-  recipeData    String   // JSON string of the full recipe
-  ingredients   String   // JSON string of ingredients used
-  
-  // Metadata
-  rating        Int?     // 1-5 stars
-  cookedAt      DateTime @default(now())
-  
-  createdAt     DateTime @default(now())
+  id          String   @id @default(cuid())
+  userId      String
+  recipeName  String
+  recipeData  String
+  ingredients String
+  rating      Int?
+  cookedAt    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model MealPlan {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  date          String   // Format: YYYY-MM-DD
-  mealType      String   // breakfast, lunch, dinner, snack
-  
-  // Recipe data
-  recipeName    String
-  recipeData    String   // JSON string of the full recipe
-  
-  completed     Boolean  @default(false)
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
+  id         String   @id @default(cuid())
+  userId     String
+  date       String
+  mealType   String
+  recipeName String
+  recipeData String
+  completed  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, date, mealType])
 }
 
 model ShoppingList {
   id          String   @id @default(cuid())
   userId      String
-  
-  // Item details
-  ingredient  String   // ex: "Oignon"
-  quantity    String   // ex: "3"
-  unit        String?  // ex: "pièces", "g", "ml"
+  ingredient  String
+  quantity    String
+  unit        String?
   isChecked   Boolean  @default(false)
-  
-  // Source tracking
-  recipeNames String   // JSON array of recipe names that need this ingredient
-  
+  recipeNames String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   @@index([userId])
 }
 
-// Subscription model for premium features
 model Subscription {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Plan details
-  plan            String   @default("free") // free, premium, pro
-  status          String   @default("active") // active, canceled, expired
-  
-  // Billing
-  stripeCustomerId    String?
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  plan                 String    @default("free")
+  status               String    @default("active")
+  stripeCustomerId     String?
   stripeSubscriptionId String?
-  stripePriceId       String?
-  
-  // Dates
-  currentPeriodStart  DateTime?
-  currentPeriodEnd    DateTime?
-  cancelAtPeriodEnd   Boolean  @default(false)
-  
-  // Usage limits (for free tier)
-  recipesGenerated    Int      @default(0)
-  mealPlansCreated    Int      @default(0)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  stripePriceId        String?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  recipesGenerated     Int       @default(0)
+  mealPlansCreated     Int       @default(0)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// User bonuses (admin can grant)
 model UserBonus {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Bonus types
-  type        String   // free_recipes, premium_days, pro_days, feature_unlock
-  value       Int      // Number of recipes, days, etc.
-  reason      String?  // Why the bonus was granted
-  
-  // Validity
-  expiresAt   DateTime?
-  used        Boolean  @default(false)
-  
-  grantedBy   String?  // Admin user ID who granted the bonus
-  
-  createdAt   DateTime @default(now())
-  
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  value     Int
+  reason    String?
+  expiresAt DateTime?
+  used      Boolean   @default(false)
+  grantedBy String?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
 }
 
-// Advertisements for free users
 model Ad {
-  id              String   @id @default(cuid())
-  
-  // Content
+  id              String    @id @default(cuid())
   title           String
   description     String?
   imageUrl        String?
   linkUrl         String?
   buttonText      String?
-  
-  // Targeting
-  type            String   @default("banner") // banner, popup, inline, sidebar
-  targetTiers     String   @default("free") // JSON array: ["free"] or ["free", "premium"]
-  targetCountries String?  // JSON array: ["CA", "US", "FR"] or null for all
-  targetRegions   String?  // JSON array: ["Ontario", "Quebec"] or null for all
-  
-  // Scheduling
-  active          Boolean  @default(true)
+  type            String    @default("banner")
+  targetTiers     String    @default("free")
+  targetCountries String?
+  targetRegions   String?
+  active          Boolean   @default(true)
   startDate       DateTime?
   endDate         DateTime?
-  priority        Int      @default(0) // Higher = more important
-  
-  // Stats
-  impressions     Int      @default(0)
-  clicks          Int      @default(0)
-  
-  // Admin tracking
+  priority        Int       @default(0)
+  impressions     Int       @default(0)
+  clicks          Int       @default(0)
   createdBy       String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
   @@index([active, type])
   @@index([startDate, endDate])
 }
 
-// Track ad impressions per user
 model AdImpression {
-  id          String   @id @default(cuid())
-  adId        String
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Interaction
-  viewed      Boolean  @default(true)
-  clicked     Boolean  @default(false)
-  
-  viewedAt    DateTime @default(now())
-  
+  id       String   @id @default(cuid())
+  adId     String
+  userId   String
+  viewed   Boolean  @default(true)
+  clicked  Boolean  @default(false)
+  viewedAt DateTime @default(now())
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([adId, userId])
   @@index([userId, viewedAt])
 }
 
-// News Feed / Cooking Tips
 model NewsFeed {
-  id              String   @id @default(cuid())
-  
-  // Content
+  id              String    @id @default(cuid())
   title           String
   content         String
   imageUrl        String?
   linkUrl         String?
-  category        String   @default("tip") // tip, news, recipe, promotion, trending
-  
-  // Targeting
-  targetTiers     String   @default("all") // all, free, premium, pro
-  targetCountries String?  // JSON array or null for all
-  
-  // Scheduling
-  active          Boolean  @default(true)
-  publishAt       DateTime @default(now())
+  category        String    @default("tip")
+  targetTiers     String    @default("all")
+  targetCountries String?
+  active          Boolean   @default(true)
+  publishAt       DateTime  @default(now())
   expiresAt       DateTime?
-  featured        Boolean  @default(false) // Show in featured section
-  sticky          Boolean  @default(false) // Pin to top
-  
-  // Stats
-  views           Int      @default(0)
-  likes           Int      @default(0)
-  
-  // Author
+  featured        Boolean   @default(false)
+  sticky          Boolean   @default(false)
+  views           Int       @default(0)
+  likes           Int       @default(0)
   authorId        String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
   @@index([active, publishAt])
   @@index([featured, sticky])
 }
 
-// System Announcements
 model Announcement {
-  id              String   @id @default(cuid())
-  
-  // Content
+  id              String    @id @default(cuid())
   title           String
   message         String
-  type            String   @default("info") // info, warning, success, promotion
-  icon            String?  // Emoji or icon name
-  
-  // Targeting
-  targetUsers     String   @default("all") // all, free, premium, pro
-  targetCountries String?  // JSON array or null for all
-  
-  // Display
-  displayType     String   @default("banner") // banner, modal, notification
-  dismissible     Boolean  @default(true)
-  
-  // Scheduling
-  active          Boolean  @default(true)
+  type            String    @default("info")
+  icon            String?
+  targetUsers     String    @default("all")
+  targetCountries String?
+  displayType     String    @default("banner")
+  dismissible     Boolean   @default(true)
+  active          Boolean   @default(true)
   startDate       DateTime?
   endDate         DateTime?
-  
-  // Stats
-  views           Int      @default(0)
-  dismissals      Int      @default(0)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  views           Int       @default(0)
+  dismissals      Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
   @@index([active, startDate, endDate])
 }
 
-// Analytics aggregation (daily stats)
 model Analytics {
-  id              String   @id @default(cuid())
-  date            String   @unique // YYYY-MM-DD
-  
-  // User stats
-  newUsers        Int      @default(0)
-  activeUsers     Int      @default(0)
-  
-  // Subscription stats
-  newSubscriptions Int     @default(0)
-  canceledSubscriptions Int @default(0)
-  premiumUsers    Int      @default(0)
-  proUsers        Int      @default(0)
-  freeUsers       Int      @default(0)
-  
-  // Revenue (for future Stripe integration)
-  revenue         Float    @default(0)
-  
-  // Recipe stats
-  recipesGenerated Int     @default(0)
-  avgRecipesPerUser Float  @default(0)
-  
-  // Ad stats
-  adImpressions   Int      @default(0)
-  adClicks        Int      @default(0)
-  adRevenue       Float    @default(0)
-  
-  // Feed stats
-  feedViews       Int      @default(0)
-  feedEngagement  Float    @default(0)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  date                  String   @unique
+  newUsers              Int      @default(0)
+  activeUsers           Int      @default(0)
+  newSubscriptions      Int      @default(0)
+  canceledSubscriptions Int      @default(0)
+  premiumUsers          Int      @default(0)
+  proUsers              Int      @default(0)
+  freeUsers             Int      @default(0)
+  revenue               Float    @default(0)
+  recipesGenerated      Int      @default(0)
+  avgRecipesPerUser     Float    @default(0)
+  adImpressions         Int      @default(0)
+  adClicks              Int      @default(0)
+  adRevenue             Float    @default(0)
+  feedViews             Int      @default(0)
+  feedEngagement        Float    @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
-// Admin action log
 model AdminLog {
-  id          String   @id @default(cuid())
-  adminId     String
-  
-  action      String   // user_banned, bonus_granted, ad_created, etc.
-  targetType  String   // user, ad, announcement, news
-  targetId    String?
-  
-  details     String?  // JSON string with action details
-  
-  createdAt   DateTime @default(now())
-  
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String
+  targetType String
+  targetId   String?
+  details    String?
+  createdAt  DateTime @default(now())
+
   @@index([adminId])
   @@index([targetType, targetId])
 }
 
-// Admin keys for promoting users to admin
 model AdminKey {
-  id          String   @id @default(cuid())
-  
-  key         String   @unique  // The actual key string
-  name        String?           // Human-readable name (e.g., "Marketing Team Key")
-  description String?           // Description of who should use this key
-  
-  // Usage tracking
-  usedBy      String?           // User ID who used this key
+  id          String    @id @default(cuid())
+  key         String    @unique
+  name        String?
+  description String?
+  usedBy      String?
   usedAt      DateTime?
-  maxUses     Int      @default(1)  // Maximum number of times this key can be used
-  useCount    Int      @default(0)  // Current number of uses
-  
-  // Validity
-  active      Boolean  @default(true)
+  maxUses     Int       @default(1)
+  useCount    Int       @default(0)
+  active      Boolean   @default(true)
   expiresAt   DateTime?
-  
-  // Creator
-  createdBy   String?  // Admin user ID who created this key
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  createdBy   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   @@index([key])
   @@index([active])
 }
