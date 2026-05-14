@@ -171,7 +171,7 @@ export function ExploreModal({ isOpen, onClose, onGoToCooking, onSignUp, isAuthe
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="w-full max-w-3xl bg-card rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          className="w-full max-w-3xl bg-card rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] pointer-events-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Progress Bar */}

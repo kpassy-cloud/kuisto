@@ -134,13 +134,13 @@ export function VideoAdModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[70] bg-black/90 flex items-center justify-center"
+        className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center"
       >
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="relative w-full max-w-2xl mx-4"
+          className="relative w-full max-w-2xl mx-4 pointer-events-auto"
         >
           {/* Progress bar */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-white/20 rounded-full overflow-hidden">

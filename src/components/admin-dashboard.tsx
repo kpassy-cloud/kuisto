@@ -550,7 +550,7 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex"
+        className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex"
         onClick={onClose}
       >
         <motion.div
@@ -559,7 +559,7 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
           exit={{ x: '-100%' }}
           transition={{ type: 'spring', damping: 25 }}
           onClick={e => e.stopPropagation()}
-          className="w-full max-w-6xl h-full bg-card shadow-2xl flex flex-col"
+          className="w-full max-w-6xl h-full bg-card shadow-2xl flex flex-col pointer-events-auto"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
@@ -1285,7 +1285,7 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="hidden lg:flex flex-col w-80 bg-muted/30 border-l p-4"
+          className="hidden lg:flex flex-col w-80 bg-muted/30 border-l p-4 pointer-events-auto"
           onClick={e => e.stopPropagation()}
         >
           <h3 className="font-serif font-bold mb-4">{language === 'fr' ? 'Aperçu public' : 'Public preview'}</h3>

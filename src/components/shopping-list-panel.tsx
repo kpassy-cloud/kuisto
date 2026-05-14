@@ -264,13 +264,13 @@ export function ShoppingListPanel({ isOpen, onClose, onAddFromRecipe }: Shopping
   }, [items, groupByCategory])
 
   // Panel transition classes with warm theme
-  const panelClasses = `fixed inset-y-0 right-0 w-full sm:w-96 bg-card shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`
+  const panelClasses = `fixed inset-y-0 right-0 w-full sm:w-96 bg-card shadow-2xl z-[200] transform transition-transform duration-300 ease-in-out pointer-events-auto ${isOpen ? 'translate-x-0' : 'translate-x-full'}`
 
   return (
     <>
       {/* Backdrop */}
       <div 
-        className={`fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 bg-black/30 backdrop-blur-sm z-[190] transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
       

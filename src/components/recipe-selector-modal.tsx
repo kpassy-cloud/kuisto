@@ -105,7 +105,7 @@ export function RecipeSelectorModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+        className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
         onClick={onClose}
       >
         <motion.div
@@ -113,7 +113,7 @@ export function RecipeSelectorModal({
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           onClick={e => e.stopPropagation()}
-          className="w-full max-w-3xl max-h-[85vh] bg-card rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+          className="w-full max-w-3xl max-h-[85vh] bg-card rounded-2xl shadow-2xl overflow-hidden flex flex-col pointer-events-auto"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary/5 to-accent/5">

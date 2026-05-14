@@ -63,7 +63,7 @@ export function PremiumLockModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+        className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
         onClick={onClose}
       >
         <motion.div
@@ -71,7 +71,7 @@ export function PremiumLockModal({
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           onClick={e => e.stopPropagation()}
-          className="w-full max-w-md"
+          className="w-full max-w-md pointer-events-auto"
         >
           <Card className="border-2 border-primary/20 shadow-2xl overflow-hidden">
             {/* Header */}

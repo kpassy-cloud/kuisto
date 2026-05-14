@@ -299,7 +299,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       >
         <motion.div
@@ -307,7 +307,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-md mx-4 bg-card rounded-2xl shadow-2xl overflow-hidden"
+          className="relative w-full max-w-md mx-4 bg-card rounded-2xl shadow-2xl overflow-hidden pointer-events-auto"
         >
           {/* Header */}
           <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 p-6 text-center">
