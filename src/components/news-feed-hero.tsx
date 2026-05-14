@@ -5,10 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { 
   Clock, Heart, Eye, TrendingUp, Flame, Sparkles, 
-  ChefHat, Utensils, Globe, Bookmark, Share2, Play,
-  ChevronRight, ArrowRight, BookOpen
+  ChefHat, Utensils, Globe, Share2, Play,
+  ChevronRight, ArrowRight, BookOpen, X, Calendar, ExternalLink
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { toast } from '@/hooks/use-toast'
@@ -42,12 +43,21 @@ const CATEGORY_IMAGES: Record<string, string> = {
   hero: 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=1400&auto=format&fit=crop&q=80',
 }
 
+const categoryLabels: Record<string, { fr: string; en: string }> = {
+  tip: { fr: 'Astuce', en: 'Tip' },
+  news: { fr: 'Actualité', en: 'News' },
+  recipe: { fr: 'Recette', en: 'Recipe' },
+  trending: { fr: 'Tendance', en: 'Trending' },
+  promotion: { fr: 'Promotion', en: 'Promotion' }
+}
+
 export function NewsFeedHero({ onSignUpClick, isAuthenticated }: NewsFeedHeroProps) {
   const { language } = useI18n()
   const [feed, setFeed] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [visibleItems, setVisibleItems] = useState(5)
+  const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null)
 
   const categories = [
     { id: null, label: language === 'fr' ? 'Tous' : 'All', icon: Sparkles },
@@ -178,6 +188,11 @@ export function NewsFeedHero({ onSignUpClick, isAuthenticated }: NewsFeedHeroPro
       setFeed(prev => prev.map(item => 
         item.id === itemId ? { ...item, likes: item.likes + 1 } : item
       ))
+      
+      // Also update selected item if it's the one being liked
+      setSelectedItem(prev => 
+        prev && prev.id === itemId ? { ...prev, likes: prev.likes + 1 } : prev
+      )
     } catch (err) {
       toast({
         title: language === 'fr' ? 'Erreur' : 'Error',
@@ -187,19 +202,27 @@ export function NewsFeedHero({ onSignUpClick, isAuthenticated }: NewsFeedHeroPro
     }
   }
 
-  const handleItemClick = async (itemId: string) => {
+  const handleItemClick = async (item: NewsItem) => {
+    // Record view
     try {
       await fetch('/api/feed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ feedId: itemId, action: 'view' })
+        body: JSON.stringify({ feedId: item.id, action: 'view' })
       })
       
-      setFeed(prev => prev.map(item => 
-        item.id === itemId ? { ...item, views: item.views + 1 } : item
+      setFeed(prev => prev.map(i => 
+        i.id === item.id ? { ...i, views: i.views + 1 } : i
       ))
     } catch (err) {
       // Ignore view errors
+    }
+    
+    // Open item
+    if (item.linkUrl) {
+      window.open(item.linkUrl, '_blank', 'noopener')
+    } else {
+      setSelectedItem(item)
     }
   }
 
@@ -207,6 +230,15 @@ export function NewsFeedHero({ onSignUpClick, isAuthenticated }: NewsFeedHeroPro
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
     return num.toString()
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString(language === 'fr' ? 'fr-CA' : 'en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
   }
 
   const getCategoryBadge = (category: string) => {
@@ -221,13 +253,7 @@ export function NewsFeedHero({ onSignUpClick, isAuthenticated }: NewsFeedHeroPro
   }
 
   const getCategoryLabel = (category: string) => {
-    const labels: Record<string, string> = {
-      tip: language === 'fr' ? 'Astuce' : 'Tip',
-      news: language === 'fr' ? 'Actualité' : 'News',
-      recipe: language === 'fr' ? 'Recette' : 'Recipe',
-      trending: language === 'fr' ? 'Tendance' : 'Trending',
-    }
-    return labels[category] || category
+    return categoryLabels[category]?.[language as 'fr' | 'en'] || category
   }
 
   const loadMore = () => {
@@ -235,262 +261,349 @@ export function NewsFeedHero({ onSignUpClick, isAuthenticated }: NewsFeedHeroPro
   }
 
   return (
-    <div className="space-y-8">
-      {/* Hero Banner */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="relative overflow-hidden rounded-3xl"
-      >
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          <img 
-            src={CATEGORY_IMAGES.hero}
-            alt="Fresh ingredients"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
-        </div>
-        
-        {/* Content */}
-        <div className="relative z-10 px-8 py-16 md:py-24 md:px-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="max-w-2xl"
-          >
-            <Badge className="mb-4 bg-primary/90 text-primary-foreground border-0">
-              <Sparkles className="w-3 h-3 mr-1" />
-              {language === 'fr' ? 'Nouveau' : 'New'}
-            </Badge>
-            
-            <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
-              {language === 'fr' 
-                ? 'L\'univers culinaire à portée de main' 
-                : 'The culinary world at your fingertips'}
-            </h1>
-            
-            <p className="text-lg md:text-xl text-white/90 mb-8 max-w-xl">
-              {language === 'fr' 
-                ? 'Découvrez les dernières tendances, astuces de chefs et recettes créatives pour inspirer votre cuisine.'
-                : 'Discover the latest trends, chef tips and creative recipes to inspire your cooking.'}
-            </p>
-            
-            <div className="flex flex-wrap gap-3">
-              <Button 
-                size="lg" 
-                onClick={() => onSignUpClick()}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
-              >
-                {language === 'fr' ? 'Commencer gratuitement' : 'Get started free'}
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                className="bg-white/10 border-white/30 text-white hover:bg-white/20 gap-2"
-              >
-                <BookOpen className="w-4 h-4" />
-                {language === 'fr' ? 'Explorer' : 'Explore'}
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </motion.div>
-
-      {/* Category Pills */}
-      <div className="flex flex-wrap justify-center gap-2">
-        {categories.map((cat) => {
-          const Icon = cat.icon
-          const isActive = selectedCategory === cat.id
-          return (
-            <motion.button
-              key={cat.id ?? 'all'}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                isActive
-                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
-                  : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-              }`}
+    <>
+      <div className="space-y-8">
+        {/* Hero Banner */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="relative overflow-hidden rounded-3xl"
+        >
+          {/* Background Image */}
+          <div className="absolute inset-0">
+            <img 
+              src={CATEGORY_IMAGES.hero}
+              alt="Fresh ingredients"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+          </div>
+          
+          {/* Content */}
+          <div className="relative z-10 px-8 py-16 md:py-24 md:px-16">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="max-w-2xl"
             >
-              <Icon className="w-4 h-4" />
-              {cat.label}
-            </motion.button>
-          )
-        })}
-      </div>
+              <Badge className="mb-4 bg-primary/90 text-primary-foreground border-0">
+                <Sparkles className="w-3 h-3 mr-1" />
+                {language === 'fr' ? 'Nouveau' : 'New'}
+              </Badge>
+              
+              <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
+                {language === 'fr' 
+                  ? 'L\'univers culinaire à portée de main' 
+                  : 'The culinary world at your fingertips'}
+              </h1>
+              
+              <p className="text-lg md:text-xl text-white/90 mb-8 max-w-xl">
+                {language === 'fr' 
+                  ? 'Découvrez les dernières tendances, astuces de chefs et recettes créatives pour inspirer votre cuisine.'
+                  : 'Discover the latest trends, chef tips and creative recipes to inspire your cooking.'}
+              </p>
+              
+              <div className="flex flex-wrap gap-3">
+                <Button 
+                  size="lg" 
+                  onClick={() => onSignUpClick()}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
+                >
+                  {language === 'fr' ? 'Commencer gratuitement' : 'Get started free'}
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="bg-white/10 border-white/30 text-white hover:bg-white/20 gap-2"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  {language === 'fr' ? 'Explorer' : 'Explore'}
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
 
-      {/* Feed Grid - Masonry Style */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <AnimatePresence mode="popLayout">
-          {loading ? (
-            // Loading skeletons
-            [...Array(6)].map((_, i) => (
-              <Card key={i} className="overflow-hidden">
-                <div className="h-48 shimmer" />
-                <CardContent className="p-5">
-                  <div className="animate-pulse space-y-3">
-                    <div className="h-4 bg-muted rounded w-3/4" />
-                    <div className="h-3 bg-muted rounded w-full" />
-                    <div className="h-3 bg-muted rounded w-2/3" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            feed.slice(0, visibleItems).map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => handleItemClick(item.id)}
-                className={item.featured ? 'md:col-span-2 lg:col-span-2' : ''}
+        {/* Category Pills */}
+        <div className="flex flex-wrap justify-center gap-2">
+          {categories.map((cat) => {
+            const Icon = cat.icon
+            const isActive = selectedCategory === cat.id
+            return (
+              <motion.button
+                key={cat.id ?? 'all'}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                  isActive
+                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
+                    : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                }`}
               >
-                <Card className={`overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-0 shadow-md ${
-                  item.featured ? 'ring-2 ring-primary/30' : ''
-                }`}>
-                  {/* Image Section */}
-                  <div className="relative h-48 md:h-56 overflow-hidden">
-                    <img 
-                      src={item.imageUrl || CATEGORY_IMAGES[item.category] || CATEGORY_IMAGES.hero}
-                      alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                    
-                    {/* Category Badge */}
-                    <div className="absolute top-4 left-4">
-                      <Badge className={`${getCategoryBadge(item.category)} border-0`}>
-                        {getCategoryLabel(item.category)}
-                      </Badge>
-                    </div>
-                    
-                    {/* Featured Badge */}
-                    {item.featured && (
-                      <div className="absolute top-4 right-4">
-                        <Badge className="bg-primary text-primary-foreground border-0">
-                          <Flame className="w-3 h-3 mr-1" />
-                          {language === 'fr' ? 'À la une' : 'Featured'}
-                        </Badge>
-                      </div>
-                    )}
-                    
-                    {/* Play button overlay for video content */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <motion.div
-                        whileHover={{ scale: 1.1 }}
-                        className="w-14 h-14 rounded-full bg-white/95 flex items-center justify-center shadow-2xl"
-                      >
-                        <Play className="w-5 h-5 text-primary ml-1" />
-                      </motion.div>
-                    </div>
-                    
-                    {/* Title overlay on image bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <h3 className="font-serif text-lg md:text-xl font-semibold text-white line-clamp-2 drop-shadow-lg">
-                        {item.title}
-                      </h3>
-                    </div>
-                  </div>
-                  
+                <Icon className="w-4 h-4" />
+                {cat.label}
+              </motion.button>
+            )
+          })}
+        </div>
+
+        {/* Feed Grid - Masonry Style */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <AnimatePresence mode="popLayout">
+            {loading ? (
+              // Loading skeletons
+              [...Array(6)].map((_, i) => (
+                <Card key={i} className="overflow-hidden">
+                  <div className="h-48 shimmer" />
                   <CardContent className="p-5">
-                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-                      {item.content}
-                    </p>
-                    
-                    {/* Stats and Actions */}
-                    <div className="flex items-center justify-between pt-3 border-t border-border">
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Eye className="w-3.5 h-3.5" />
-                          {formatNumber(item.views)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Heart className="w-3.5 h-3.5" />
-                          {formatNumber(item.likes)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" />
-                          {Math.floor((Date.now() - new Date(item.publishAt).getTime()) / 3600000)}h
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center gap-1">
-                        <motion.button
-                          whileTap={{ scale: 0.9 }}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleLike(item.id)
-                          }}
-                          className="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-500 transition-colors"
-                        >
-                          <Heart className="w-4 h-4" />
-                        </motion.button>
-                        <motion.button
-                          whileTap={{ scale: 0.9 }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 text-muted-foreground hover:text-blue-500 transition-colors"
-                        >
-                          <Share2 className="w-4 h-4" />
-                        </motion.button>
-                      </div>
+                    <div className="animate-pulse space-y-3">
+                      <div className="h-4 bg-muted rounded w-3/4" />
+                      <div className="h-3 bg-muted rounded w-full" />
+                      <div className="h-3 bg-muted rounded w-2/3" />
                     </div>
                   </CardContent>
                 </Card>
-              </motion.div>
-            ))
-          )}
-        </AnimatePresence>
+              ))
+            ) : (
+              feed.slice(0, visibleItems).map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ delay: index * 0.05 }}
+                  onClick={() => handleItemClick(item)}
+                  className={item.featured ? 'md:col-span-2 lg:col-span-2' : ''}
+                >
+                  <Card className={`overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-0 shadow-md ${
+                    item.featured ? 'ring-2 ring-primary/30' : ''
+                  }`}>
+                    {/* Image Section */}
+                    <div className="relative h-48 md:h-56 overflow-hidden">
+                      <img 
+                        src={item.imageUrl || CATEGORY_IMAGES[item.category] || CATEGORY_IMAGES.hero}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                      
+                      {/* Category Badge */}
+                      <div className="absolute top-4 left-4">
+                        <Badge className={`${getCategoryBadge(item.category)} border-0`}>
+                          {getCategoryLabel(item.category)}
+                        </Badge>
+                      </div>
+                      
+                      {/* Featured Badge */}
+                      {item.featured && (
+                        <div className="absolute top-4 right-4">
+                          <Badge className="bg-primary text-primary-foreground border-0">
+                            <Flame className="w-3 h-3 mr-1" />
+                            {language === 'fr' ? 'À la une' : 'Featured'}
+                          </Badge>
+                        </div>
+                      )}
+                      
+                      {/* Play button overlay for video content */}
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <motion.div
+                          whileHover={{ scale: 1.1 }}
+                          className="w-14 h-14 rounded-full bg-white/95 flex items-center justify-center shadow-2xl"
+                        >
+                          <Play className="w-5 h-5 text-primary ml-1" />
+                        </motion.div>
+                      </div>
+                      
+                      {/* Title overlay on image bottom */}
+                      <div className="absolute bottom-0 left-0 right-0 p-4">
+                        <h3 className="font-serif text-lg md:text-xl font-semibold text-white line-clamp-2 drop-shadow-lg">
+                          {item.title}
+                        </h3>
+                      </div>
+                    </div>
+                    
+                    <CardContent className="p-5">
+                      <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                        {item.content}
+                      </p>
+                      
+                      {/* Stats and Actions */}
+                      <div className="flex items-center justify-between pt-3 border-t border-border">
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-3.5 h-3.5" />
+                            {formatNumber(item.views)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Heart className="w-3.5 h-3.5" />
+                            {formatNumber(item.likes)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5" />
+                            {Math.floor((Date.now() - new Date(item.publishAt).getTime()) / 3600000)}h
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-1">
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleLike(item.id)
+                            }}
+                            className="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-500 transition-colors"
+                          >
+                            <Heart className="w-4 h-4" />
+                          </motion.button>
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 text-muted-foreground hover:text-blue-500 transition-colors"
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </motion.button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Load More Button */}
+        {feed.length > visibleItems && (
+          <div className="flex justify-center pt-4">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={loadMore}
+              className="gap-2"
+            >
+              {language === 'fr' ? 'Voir plus d\'articles' : 'Load more articles'}
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+
+        {/* Sign Up CTA (shown for non-authenticated users after scrolling) */}
+        {!isAuthenticated && visibleItems >= 5 && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="fixed bottom-20 left-4 right-4 md:left-auto md:right-8 md:w-96 bg-card/95 backdrop-blur-lg border shadow-2xl rounded-2xl p-6 z-40"
+          >
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg">
+                <ChefHat className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-serif font-semibold text-foreground mb-1">
+                  {language === 'fr' ? 'Continuez à explorer!' : 'Keep exploring!'}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {language === 'fr' 
+                    ? 'Inscrivez-vous gratuitement pour découvrir plus de contenus et créer vos propres recettes.'
+                    : 'Sign up for free to discover more content and create your own recipes.'}
+                </p>
+                <Button onClick={onSignUpClick} className="w-full bg-primary hover:bg-primary/90">
+                  {language === 'fr' ? 'S\'inscrire gratuitement' : 'Sign up free'}
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
       </div>
 
-      {/* Load More Button */}
-      {feed.length > visibleItems && (
-        <div className="flex justify-center pt-4">
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={loadMore}
-            className="gap-2"
+      {/* Article Detail Modal */}
+      <AnimatePresence>
+        {selectedItem && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setSelectedItem(null)}
           >
-            {language === 'fr' ? 'Voir plus d\'articles' : 'Load more articles'}
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-      )}
-
-      {/* Sign Up CTA (shown for non-authenticated users after scrolling) */}
-      {!isAuthenticated && visibleItems >= 5 && (
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="fixed bottom-20 left-4 right-4 md:left-auto md:right-8 md:w-96 bg-card/95 backdrop-blur-lg border shadow-2xl rounded-2xl p-6 z-40"
-        >
-          <div className="flex items-start gap-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg">
-              <ChefHat className="w-6 h-6" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-serif font-semibold text-foreground mb-1">
-                {language === 'fr' ? 'Continuez à explorer!' : 'Keep exploring!'}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-3">
-                {language === 'fr' 
-                  ? 'Inscrivez-vous gratuitement pour découvrir plus de contenus et créer vos propres recettes.'
-                  : 'Sign up for free to discover more content and create your own recipes.'}
-              </p>
-              <Button onClick={onSignUpClick} className="w-full bg-primary hover:bg-primary/90">
-                {language === 'fr' ? 'S\'inscrire gratuitement' : 'Sign up free'}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </div>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-2xl max-h-[90vh] bg-card rounded-xl shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {selectedItem.imageUrl && (
+                <img 
+                  src={selectedItem.imageUrl} 
+                  alt={selectedItem.title}
+                  className="w-full h-48 object-cover"
+                />
+              )}
+              
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Badge className={getCategoryBadge(selectedItem.category)}>
+                      {getCategoryLabel(selectedItem.category)}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {formatDate(selectedItem.publishAt)}
+                    </span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setSelectedItem(null)}
+                    className="shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                
+                <h2 className="font-serif text-xl font-bold mb-4">{selectedItem.title}</h2>
+                
+                <ScrollArea className="max-h-[40vh]">
+                  <div className="prose prose-sm dark:prose-invert">
+                    <p className="text-muted-foreground whitespace-pre-wrap">{selectedItem.content}</p>
+                  </div>
+                </ScrollArea>
+                
+                <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => handleLike(selectedItem.id)}
+                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-red-500 transition-colors"
+                    >
+                      <Heart className="w-4 h-4" />
+                      {formatNumber(selectedItem.likes)} {language === 'fr' ? 'J\'aime' : 'likes'}
+                    </button>
+                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Eye className="w-4 h-4" />
+                      {formatNumber(selectedItem.views)} {language === 'fr' ? 'vues' : 'views'}
+                    </span>
+                  </div>
+                  
+                  {selectedItem.linkUrl && (
+                    <Button
+                      size="sm"
+                      onClick={() => window.open(selectedItem.linkUrl!, '_blank', 'noopener')}
+                    >
+                      {language === 'fr' ? 'Voir le lien' : 'View link'}
+                      <ExternalLink className="w-4 h-4 ml-1" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   )
 }

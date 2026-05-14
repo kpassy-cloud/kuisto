@@ -1,13 +1,14 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { 
-  Newspaper, ExternalLink, Heart, ChefHat,
-  TrendingUp, Lightbulb, Sparkles, Tag
+  Newspaper, ExternalLink, Heart, ChefHat, X,
+  TrendingUp, Lightbulb, Sparkles, Tag, Calendar, Eye
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 
@@ -45,6 +46,14 @@ const categoryColors: Record<string, string> = {
   trending: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
 }
 
+const categoryLabels: Record<string, { fr: string; en: string }> = {
+  tip: { fr: 'Astuce', en: 'Tip' },
+  news: { fr: 'Actualité', en: 'News' },
+  recipe: { fr: 'Recette', en: 'Recipe' },
+  promotion: { fr: 'Promotion', en: 'Promotion' },
+  trending: { fr: 'Tendance', en: 'Trending' }
+}
+
 function formatTimeAgo(dateString: string, language: string): string {
   const date = new Date(dateString)
   const now = new Date()
@@ -63,10 +72,20 @@ function formatTimeAgo(dateString: string, language: string): string {
   return language === 'fr' ? 'À l\'instant' : 'Just now'
 }
 
+function formatDate(dateString: string, language: string): string {
+  const date = new Date(dateString)
+  return date.toLocaleDateString(language === 'fr' ? 'fr-CA' : 'en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
+
 export function NewsFeed({ country, limit = 5, compact = false }: NewsFeedProps) {
   const { language } = useI18n()
   const [feed, setFeed] = useState<FeedItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedItem, setSelectedItem] = useState<FeedItem | null>(null)
 
   useEffect(() => {
     const fetchFeedItems = async () => {
@@ -95,6 +114,10 @@ export function NewsFeed({ country, limit = 5, compact = false }: NewsFeedProps)
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ feedId, action: 'view' })
       })
+      // Update local state
+      setFeed(prev => prev.map(item => 
+        item.id === feedId ? { ...item, views: item.views + 1 } : item
+      ))
     } catch (err) {
         console.error('Failed to record view:', err)
     }
@@ -112,6 +135,15 @@ export function NewsFeed({ country, limit = 5, compact = false }: NewsFeedProps)
       ))
     } catch (err) {
       console.error('Failed to record like:', err)
+    }
+  }
+
+  const handleItemClick = (item: FeedItem) => {
+    handleView(item.id)
+    if (item.linkUrl) {
+      window.open(item.linkUrl, '_blank', 'noopener')
+    } else {
+      setSelectedItem(item)
     }
   }
 
@@ -133,16 +165,13 @@ export function NewsFeed({ country, limit = 5, compact = false }: NewsFeedProps)
     return (
       <div className="space-y-2">
         {feed.slice(0, 3).map((item, index) => (
-          <motion.a
+          <motion.button
             key={item.id}
-            href={item.linkUrl || '#'}
-            target={item.linkUrl ? '_blank' : undefined}
-            rel="noopener noreferrer"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.05 }}
-            onClick={() => handleView(item.id)}
-            className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
+            onClick={() => handleItemClick(item)}
+            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group text-left"
           >
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               {categoryIcons[item.category] || <Tag className="w-4 h-4" />}
@@ -158,97 +187,172 @@ export function NewsFeed({ country, limit = 5, compact = false }: NewsFeedProps)
             {item.linkUrl && (
               <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
             )}
-          </motion.a>
+          </motion.button>
         ))}
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-serif font-bold flex items-center gap-2">
-          <Newspaper className="w-5 h-5 text-primary" />
-          {language === 'fr' ? 'Actualités culinaires' : 'Cooking News'}
-        </h3>
+    <>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-serif font-bold flex items-center gap-2">
+            <Newspaper className="w-5 h-5 text-primary" />
+            {language === 'fr' ? 'Actualités culinaires' : 'Cooking News'}
+          </h3>
+        </div>
+
+        <div className="space-y-3">
+          {feed.map((item, index) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+            >
+              <Card 
+                className="overflow-hidden hover:shadow-lg transition-all cursor-pointer hover:border-primary/30"
+                onClick={() => handleItemClick(item)}
+              >
+                <CardContent className="p-0">
+                  {item.imageUrl && (
+                    <img 
+                      src={item.imageUrl} 
+                      alt={item.title}
+                      className="w-full h-32 object-cover"
+                    />
+                  )}
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className={categoryColors[item.category] || ''}>
+                        {categoryIcons[item.category]}
+                        <span className="ml-1">{categoryLabels[item.category]?.[language as 'fr' | 'en'] || item.category}</span>
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {formatTimeAgo(item.publishAt, language)}
+                      </span>
+                    </div>
+                    <h4 className="font-medium text-sm line-clamp-2 mb-1">{item.title}</h4>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{item.content}</p>
+                  </div>
+                  
+                  <div className="flex items-center justify-between px-4 pb-3">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleLike(item.id)
+                        }}
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-500 transition-colors"
+                      >
+                        <Heart className="w-3 h-3" />
+                        {item.likes}
+                      </button>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Eye className="w-3 h-3" />
+                        {item.views}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-1 text-xs text-primary">
+                      {language === 'fr' ? 'Lire plus' : 'Read more'}
+                      <ExternalLink className="w-3 h-3" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
       </div>
 
-      <div className="space-y-3">
-        {feed.map((item, index) => (
+      {/* Article Detail Modal */}
+      <AnimatePresence>
+        {selectedItem && (
           <motion.div
-            key={item.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setSelectedItem(null)}
           >
-            <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-              <CardContent className="p-0">
-                {item.imageUrl && (
-                  <img 
-                    src={item.imageUrl} 
-                    alt={item.title}
-                    className="w-full h-32 object-cover"
-                  />
-                )}
-                <div className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge className={categoryColors[item.category] || ''}>
-                      {categoryIcons[item.category]}
-                      <span className="ml-1 capitalize">{item.category}</span>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-2xl max-h-[90vh] bg-card rounded-xl shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {selectedItem.imageUrl && (
+                <img 
+                  src={selectedItem.imageUrl} 
+                  alt={selectedItem.title}
+                  className="w-full h-48 object-cover"
+                />
+              )}
+              
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Badge className={categoryColors[selectedItem.category] || ''}>
+                      {categoryIcons[selectedItem.category]}
+                      <span className="ml-1">{categoryLabels[selectedItem.category]?.[language as 'fr' | 'en'] || selectedItem.category}</span>
                     </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {formatTimeAgo(item.publishAt, language)}
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {formatDate(selectedItem.publishAt, language)}
                     </span>
                   </div>
-                  <h4 className="font-medium text-sm line-clamp-2 mb-1">{item.title}</h4>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{item.content}</p>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setSelectedItem(null)}
+                    className="shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
                 </div>
                 
-                <div className="flex items-center justify-between px-4 pb-3">
-                  <div className="flex items-center gap-3">
+                <h2 className="font-serif text-xl font-bold mb-4">{selectedItem.title}</h2>
+                
+                <ScrollArea className="max-h-[40vh]">
+                  <div className="prose prose-sm dark:prose-invert">
+                    <p className="text-muted-foreground whitespace-pre-wrap">{selectedItem.content}</p>
+                  </div>
+                </ScrollArea>
+                
+                <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                  <div className="flex items-center gap-4">
                     <button
-                      onClick={() => handleLike(item.id)}
-                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-500 transition-colors"
+                      onClick={() => handleLike(selectedItem.id)}
+                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-red-500 transition-colors"
                     >
-                      <Heart className="w-3 h-3" />
-                      {item.likes}
+                      <Heart className="w-4 h-4" />
+                      {selectedItem.likes} {language === 'fr' ? 'J\'aime' : 'likes'}
                     </button>
-                    <span className="text-xs text-muted-foreground">
-                      <EyeIcon className="w-3 h-3 inline mr-1" />
-                      {item.views}
+                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Eye className="w-4 h-4" />
+                      {selectedItem.views} {language === 'fr' ? 'vues' : 'views'}
                     </span>
                   </div>
                   
-                  {item.linkUrl && (
+                  {selectedItem.linkUrl && (
                     <Button
                       size="sm"
-                      variant="ghost"
-                      className="h-7 text-xs"
-                      onClick={() => {
-                        handleView(item.id)
-                        window.open(item.linkUrl, '_blank', 'noopener')
-                      }}
+                      onClick={() => window.open(selectedItem.linkUrl!, '_blank', 'noopener')}
                     >
-                      {language === 'fr' ? 'Lire plus' : 'Read more'}
-                      <ExternalLink className="w-3 h-3 ml-1" />
+                      {language === 'fr' ? 'Voir le lien' : 'View link'}
+                      <ExternalLink className="w-4 h-4 ml-1" />
                     </Button>
                   )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </motion.div>
           </motion.div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function EyeIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-    </svg>
+        )}
+      </AnimatePresence>
+    </>
   )
 }
 
