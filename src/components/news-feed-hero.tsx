@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { toast } from '@/hooks/use-toast'
+import { ExploreModal } from '@/components/explore-modal'
 
 interface NewsItem {
   id: string
@@ -60,6 +61,7 @@ export function NewsFeedHero({ onSignUpClick, isAuthenticated, onGoToCooking }: 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [visibleItems, setVisibleItems] = useState(5)
   const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null)
+  const [showExploreModal, setShowExploreModal] = useState(false)
 
   const categories = [
     { id: null, label: language === 'fr' ? 'Tous' : 'All', icon: Sparkles },
@@ -322,6 +324,7 @@ export function NewsFeedHero({ onSignUpClick, isAuthenticated, onGoToCooking }: 
                 <Button 
                   size="lg" 
                   variant="outline"
+                  onClick={() => setShowExploreModal(true)}
                   className="bg-white/10 border-white/30 text-white hover:bg-white/20 gap-2"
                 >
                   <BookOpen className="w-4 h-4" />
@@ -657,6 +660,15 @@ export function NewsFeedHero({ onSignUpClick, isAuthenticated, onGoToCooking }: 
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Explore Modal */}
+      <ExploreModal
+        isOpen={showExploreModal}
+        onClose={() => setShowExploreModal(false)}
+        onGoToCooking={onGoToCooking}
+        onSignUp={onSignUpClick}
+        isAuthenticated={isAuthenticated}
+      />
     </>
   )
 }
