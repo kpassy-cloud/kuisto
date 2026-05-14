@@ -15,6 +15,7 @@ export const STRIPE_PRICES = {
 }
 
 // Plan features for display
+// Pricing calculation: Monthly * 12 * 0.80 = Yearly price (20% discount)
 export const PLAN_FEATURES = {
   free: {
     name: 'Gratuit',
@@ -37,7 +38,7 @@ export const PLAN_FEATURES = {
   premium: {
     name: 'Premium',
     priceMonthly: 6.99,
-    priceYearly: 69.99,
+    priceYearly: 67.10, // 6.99 * 12 * 0.80 = 67.10 (20% discount)
     features: [
       '25 recettes par jour',
       'Plans de repas illimités',
@@ -59,7 +60,7 @@ export const PLAN_FEATURES = {
   pro: {
     name: 'Pro',
     priceMonthly: 14.99,
-    priceYearly: 149.99,
+    priceYearly: 143.90, // 14.99 * 12 * 0.80 = 143.90 (20% discount)
     features: [
       'Recettes illimitées',
       'Plans de repas illimités',

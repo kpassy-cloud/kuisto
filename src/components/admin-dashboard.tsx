@@ -12,17 +12,18 @@ import {
   Plus, Edit, Trash2, Search, Filter, Eye, MousePointer, Gift,
   Settings, Bell, Globe, MapPin, Calendar, Clock, Check, AlertCircle,
   ChevronDown, ChevronUp, RefreshCw, Download, ExternalLink,
-  DollarSign, Activity, Target, Zap, Key, Copy
+  DollarSign, Activity, Target, Zap, Key, Copy, CreditCard, Sparkles
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { toast } from '@/hooks/use-toast'
+import { StripeConfigForm, PRICING } from './stripe-config-form'
 
 interface AdminDashboardProps {
   isOpen: boolean
   onClose: () => void
 }
 
-type Tab = 'overview' | 'users' | 'ads' | 'feed' | 'announcements' | 'analytics' | 'keys'
+type Tab = 'overview' | 'users' | 'ads' | 'feed' | 'announcements' | 'analytics' | 'keys' | 'stripe'
 
 interface User {
   id: string
@@ -535,6 +536,7 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
     { id: 'overview', icon: <BarChart3 className="w-4 h-4" />, label: t('overview') },
     { id: 'users', icon: <Users className="w-4 h-4" />, label: t('users') },
     { id: 'keys', icon: <Key className="w-4 h-4" />, label: language === 'fr' ? 'Clés Admin' : 'Admin Keys' },
+    { id: 'stripe', icon: <CreditCard className="w-4 h-4" />, label: 'Stripe' },
     { id: 'ads', icon: <Megaphone className="w-4 h-4" />, label: t('ads') },
     { id: 'feed', icon: <Newspaper className="w-4 h-4" />, label: t('feed') },
     { id: 'announcements', icon: <Bell className="w-4 h-4" />, label: t('announcements') },
@@ -1201,6 +1203,77 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
                       ))
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* Stripe Configuration Tab */}
+              {activeTab === 'stripe' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h2 className="font-serif text-xl font-bold">Configuration Stripe</h2>
+                      <p className="text-sm text-muted-foreground">
+                        {language === 'fr' 
+                          ? 'Intégrez vos produits Stripe pour les paiements'
+                          : 'Integrate your Stripe products for payments'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Pricing Summary */}
+                  <Card className="border-2 border-violet-200 dark:border-violet-800">
+                    <CardHeader className="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950 dark:to-purple-950">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <DollarSign className="w-5 h-5 text-violet-500" />
+                        {language === 'fr' ? 'Prix configurés' : 'Configured Pricing'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Sparkles className="w-4 h-4 text-amber-500" />
+                            <span className="font-bold">Premium</span>
+                          </div>
+                          <div className="text-sm space-y-1">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Mensuel:</span>
+                              <span className="font-medium">${PRICING.premium.monthly} CA</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Annuel:</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">${PRICING.premium.yearly} CA</span>
+                                <Badge variant="secondary" className="text-xs text-green-600">-20%</Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-950/30">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Crown className="w-4 h-4 text-orange-500" />
+                            <span className="font-bold">Pro</span>
+                          </div>
+                          <div className="text-sm space-y-1">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Mensuel:</span>
+                              <span className="font-medium">${PRICING.pro.monthly} CA</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Annuel:</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">${PRICING.pro.yearly} CA</span>
+                                <Badge variant="secondary" className="text-xs text-green-600">-20%</Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Stripe Config Form */}
+                  <StripeConfigForm />
                 </div>
               )}
             </div>
