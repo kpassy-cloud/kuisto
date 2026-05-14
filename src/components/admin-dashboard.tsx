@@ -511,6 +511,7 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
   return (
     <AnimatePresence>
       <motion.div
+        key="admin-dashboard-overlay"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -1184,6 +1185,7 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
       </motion.div>
 
       {/* User Modal */}
+      <React.Fragment key="user-modal">
       <UserModal
         isOpen={showUserModal}
         onClose={() => {
@@ -1195,30 +1197,37 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
         onGrantBonus={handleGrantBonus}
         language={language}
       />
+      </React.Fragment>
 
       {/* Ad Modal */}
+      <React.Fragment key="ad-modal">
       <AdModal
         isOpen={showAdModal}
         onClose={() => setShowAdModal(false)}
         onCreate={handleCreateAd}
         language={language}
       />
+      </React.Fragment>
 
       {/* Feed Modal */}
+      <React.Fragment key="feed-modal">
       <FeedModal
         isOpen={showFeedModal}
         onClose={() => setShowFeedModal(false)}
         onCreate={handleCreateFeedItem}
         language={language}
       />
+      </React.Fragment>
 
       {/* Announcement Modal */}
+      <React.Fragment key="announcement-modal">
       <AnnouncementModal
         isOpen={showAnnouncementModal}
         onClose={() => setShowAnnouncementModal(false)}
         onCreate={handleCreateAnnouncement}
         language={language}
       />
+      </React.Fragment>
     </AnimatePresence>
   )
 }
