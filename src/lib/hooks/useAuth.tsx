@@ -1,14 +1,14 @@
 'use client'
 
 import { SessionProvider, useSession as nextAuthUseSession, signIn, signOut } from 'next-auth/react'
-import { ReactNode } from 'react'
+import { ReactNode, useCallback } from 'react'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   return <SessionProvider>{children}</SessionProvider>
 }
 
 export function useAuth() {
-  const { data: session, status } = nextAuthUseSession()
+  const { data: session, status, update } = nextAuthUseSession()
 
   const login = async (email: string, password?: string) => {
     const result = await signIn('credentials', {
@@ -23,6 +23,16 @@ export function useAuth() {
     await signOut({ redirect: false })
   }
 
+  const refreshUser = useCallback(async () => {
+    // Force refresh the session by calling update
+    // This will trigger the session callback in NextAuth
+    try {
+      await update()
+    } catch (error) {
+      console.error('Failed to refresh session:', error)
+    }
+  }, [update])
+
   return {
     user: session?.user,
     isAuthenticated: status === 'authenticated',
@@ -30,5 +40,6 @@ export function useAuth() {
     login,
     logout,
     plan: session?.user?.plan || 'free',
+    refreshUser,
   }
 }

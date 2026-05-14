@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress'
 import { 
   X, Crown, Check, Sparkles, CreditCard, Calendar, 
   ChefHat, Clock, Heart, ShoppingCart, Zap, Star,
-  ChevronRight, Shield, Gift
+  ChevronRight, Shield, Gift, ExternalLink
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { useAuth } from '@/lib/hooks/useAuth'
@@ -27,6 +27,8 @@ interface SubscriptionData {
   mealPlansCreated: number
   currentPeriodEnd?: string
   cancelAtPeriodEnd: boolean
+  stripeCustomerId?: string
+  stripeSubscriptionId?: string
 }
 
 const plans = [
@@ -51,18 +53,20 @@ const plans = [
   {
     id: 'premium',
     name: { fr: 'Premium', en: 'Premium' },
+    priceMonthly: 6.99,
+    priceYearly: 69.99,
     price: { fr: '$6.99 CA', en: '$6.99 CA' },
     period: { fr: '/mois', en: '/month' },
     features: [
-      { fr: 'Recettes illimitées', en: 'Unlimited recipes' },
+      { fr: '25 recettes par jour', en: '25 recipes per day' },
       { fr: 'Planificateur avancé', en: 'Advanced planner' },
-      { fr: 'Sauvegarde illimitée', en: 'Unlimited storage' },
-      { fr: 'Recettes IA prioritaires', en: 'AI recipes priority' },
+      { fr: 'Sans publicités', en: 'Ad-free experience' },
+      { fr: 'Filtres avancés', en: 'Advanced filters' },
       { fr: 'Export PDF', en: 'PDF export' },
       { fr: 'Support prioritaire', en: 'Priority support' },
     ],
     limits: {
-      recipesPerDay: -1,
+      recipesPerDay: 25,
       mealPlansPerWeek: -1,
     },
     color: 'from-primary to-emerald-500',
@@ -71,15 +75,17 @@ const plans = [
   {
     id: 'pro',
     name: { fr: 'Pro', en: 'Pro' },
-    price: { fr: '$12.99 CA', en: '$12.99 CA' },
+    priceMonthly: 14.99,
+    priceYearly: 149.99,
+    price: { fr: '$14.99 CA', en: '$14.99 CA' },
     period: { fr: '/mois', en: '/month' },
     features: [
+      { fr: 'Recettes illimitées', en: 'Unlimited recipes' },
       { fr: 'Tout de Premium', en: 'Everything in Premium' },
       { fr: 'API Access', en: 'API Access' },
-      { fr: 'Multi-comptes famille', en: 'Family accounts (5)' },
       { fr: 'Recettes exclusives', en: 'Exclusive recipes' },
       { fr: 'Statistiques avancées', en: 'Advanced analytics' },
-      { fr: 'Personnalisation marque', en: 'Brand customization' },
+      { fr: 'Support VIP', en: 'VIP support' },
     ],
     limits: {
       recipesPerDay: -1,
@@ -92,16 +98,45 @@ const plans = [
 
 export function SubscriptionDashboard({ isOpen, onClose }: SubscriptionDashboardProps) {
   const { t, language } = useI18n()
-  const { user, plan: currentPlan } = useAuth()
+  const { user, plan: currentPlan, refreshUser } = useAuth()
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showCheckout, setShowCheckout] = useState<string | null>(null)
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly')
 
   useEffect(() => {
     if (isOpen && user) {
       loadSubscription()
     }
   }, [isOpen, user])
+
+  // Check for success/cancel from Stripe redirect
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const subscriptionStatus = urlParams.get('subscription')
+    
+    if (subscriptionStatus === 'success') {
+      toast({
+        title: language === 'fr' ? 'Paiement réussi !' : 'Payment successful!',
+        description: language === 'fr'
+          ? 'Votre abonnement est maintenant actif'
+          : 'Your subscription is now active'
+      })
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname)
+      loadSubscription()
+      refreshUser?.()
+    } else if (subscriptionStatus === 'canceled') {
+      toast({
+        title: language === 'fr' ? 'Paiement annulé' : 'Payment canceled',
+        description: language === 'fr'
+          ? 'Le paiement a été annulé'
+          : 'The payment was canceled',
+        variant: 'destructive'
+      })
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [language])
 
   const loadSubscription = async () => {
     try {
@@ -125,44 +160,106 @@ export function SubscriptionDashboard({ isOpen, onClose }: SubscriptionDashboard
       return
     }
 
+    // Free plan - just update directly
+    if (planId === 'free') {
+      setIsLoading(true)
+      try {
+        const response = await fetch('/api/subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plan: 'free' })
+        })
+
+        if (response.ok) {
+          toast({
+            title: language === 'fr' ? 'Plan gratuit activé' : 'Free plan activated'
+          })
+          loadSubscription()
+          refreshUser?.()
+        }
+      } catch (err) {
+        console.error('Failed to update plan:', err)
+      } finally {
+        setIsLoading(false)
+      }
+      return
+    }
+
+    // Premium/Pro - redirect to Stripe Checkout
     setShowCheckout(planId)
     setIsLoading(true)
 
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000))
-
-      // Update subscription in database
-      const response = await fetch('/api/subscription', {
+      const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planId })
+        body: JSON.stringify({ 
+          plan: planId, 
+          interval: billingInterval 
+        })
       })
 
-      if (response.ok) {
-        toast({
-          title: language === 'fr' ? 'Abonnement activé !' : 'Subscription activated!',
-          description: language === 'fr'
-            ? `Vous êtes maintenant ${planId === 'premium' ? 'Premium' : 'Pro'}`
-            : `You are now ${planId === 'premium' ? 'Premium' : 'Pro'}`
-        })
-        loadSubscription()
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Checkout failed')
       }
-    } catch (err) {
+
+      // Redirect to Stripe Checkout
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch (err: any) {
       toast({
         title: language === 'fr' ? 'Erreur' : 'Error',
-        description: language === 'fr'
+        description: err.message || (language === 'fr'
           ? 'Une erreur est survenue lors du paiement'
-          : 'An error occurred during payment',
+          : 'An error occurred during payment'),
+        variant: 'destructive'
+      })
+      setShowCheckout(null)
+      setIsLoading(false)
+    }
+  }
+
+  const handleManageSubscription = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/stripe/portal', {
+        method: 'POST'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Portal failed')
+      }
+
+      // Redirect to Stripe Customer Portal
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch (err: any) {
+      toast({
+        title: language === 'fr' ? 'Erreur' : 'Error',
+        description: err.message || (language === 'fr'
+          ? 'Impossible d\'ouvrir le portail client'
+          : 'Could not open customer portal'),
         variant: 'destructive'
       })
     } finally {
       setIsLoading(false)
-      setShowCheckout(null)
     }
   }
 
   const handleCancel = async () => {
+    // For Stripe subscriptions, redirect to portal
+    if (subscription?.stripeSubscriptionId) {
+      handleManageSubscription()
+      return
+    }
+
+    // For mock subscriptions
     try {
       const response = await fetch('/api/subscription', {
         method: 'DELETE'
@@ -190,6 +287,24 @@ export function SubscriptionDashboard({ isOpen, onClose }: SubscriptionDashboard
     if (!subscription) return 0
     const freePlan = plans[0]
     return Math.min(100, (subscription.recipesGenerated / freePlan.limits.recipesPerDay) * 100)
+  }
+
+  const getPriceDisplay = (plan: typeof plans[0]) => {
+    if (plan.id === 'free') return plan.price[language as 'fr' | 'en']
+    
+    const price = billingInterval === 'monthly' ? plan.priceMonthly : plan.priceYearly
+    const suffix = billingInterval === 'yearly' 
+      ? (language === 'fr' ? '/an' : '/year')
+      : (language === 'fr' ? '/mois' : '/month')
+    
+    return `$${price?.toFixed(2)} CA`
+  }
+
+  const getPricePeriod = (plan: typeof plans[0]) => {
+    if (plan.id === 'free') return plan.period[language as 'fr' | 'en']
+    return billingInterval === 'yearly' 
+      ? (language === 'fr' ? '/an' : '/year')
+      : (language === 'fr' ? '/mois' : '/month')
   }
 
   if (!isOpen) return null
@@ -272,6 +387,35 @@ export function SubscriptionDashboard({ isOpen, onClose }: SubscriptionDashboard
             </div>
           )}
 
+          {/* Billing Toggle */}
+          <div className="px-6 pt-6">
+            <div className="flex items-center justify-center gap-2 p-1 bg-muted rounded-lg w-fit mx-auto">
+              <button
+                onClick={() => setBillingInterval('monthly')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  billingInterval === 'monthly'
+                    ? 'bg-card shadow text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {language === 'fr' ? 'Mensuel' : 'Monthly'}
+              </button>
+              <button
+                onClick={() => setBillingInterval('yearly')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  billingInterval === 'yearly'
+                    ? 'bg-card shadow text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {language === 'fr' ? 'Annuel' : 'Yearly'}
+                <Badge variant="secondary" className="ml-2 text-xs">
+                  -20%
+                </Badge>
+              </button>
+            </div>
+          </div>
+
           {/* Plans */}
           <div className="p-6">
             <h3 className="font-medium mb-4">
@@ -304,8 +448,8 @@ export function SubscriptionDashboard({ isOpen, onClose }: SubscriptionDashboard
                     <div className={`p-4 bg-gradient-to-r ${plan.color} rounded-t-lg text-white`}>
                       <h4 className="font-bold text-lg">{plan.name[language as 'fr' | 'en']}</h4>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-3xl font-bold">{plan.price[language as 'fr' | 'en']}</span>
-                        <span className="text-sm opacity-80">{plan.period[language as 'fr' | 'en']}</span>
+                        <span className="text-3xl font-bold">{getPriceDisplay(plan)}</span>
+                        <span className="text-sm opacity-80">{getPricePeriod(plan)}</span>
                       </div>
                     </div>
                     
@@ -337,7 +481,7 @@ export function SubscriptionDashboard({ isOpen, onClose }: SubscriptionDashboard
                                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                                 className="w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"
                               />
-                              {language === 'fr' ? 'Traitement...' : 'Processing...'}
+                              {language === 'fr' ? 'Redirection...' : 'Redirecting...'}
                             </>
                           ) : (
                             <>
@@ -404,15 +548,29 @@ export function SubscriptionDashboard({ isOpen, onClose }: SubscriptionDashboard
                 </div>
               </div>
 
-              {!subscription.cancelAtPeriodEnd && (
-                <Button 
-                  variant="outline" 
-                  className="mt-4 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                  onClick={handleCancel}
-                >
-                  {language === 'fr' ? 'Annuler l\'abonnement' : 'Cancel subscription'}
-                </Button>
-              )}
+              <div className="flex gap-3 mt-4">
+                {subscription.stripeSubscriptionId && (
+                  <Button 
+                    variant="outline"
+                    onClick={handleManageSubscription}
+                    disabled={isLoading}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    {language === 'fr' ? 'Gérer l\'abonnement' : 'Manage subscription'}
+                  </Button>
+                )}
+                
+                {!subscription.cancelAtPeriodEnd && (
+                  <Button 
+                    variant="outline" 
+                    className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    onClick={handleCancel}
+                    disabled={isLoading}
+                  >
+                    {language === 'fr' ? 'Annuler l\'abonnement' : 'Cancel subscription'}
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 
@@ -429,10 +587,10 @@ export function SubscriptionDashboard({ isOpen, onClose }: SubscriptionDashboard
                   <ChefHat className="w-6 h-6 text-primary" />
                 </div>
                 <h4 className="font-medium text-sm">
-                  {language === 'fr' ? 'Recettes illimitées' : 'Unlimited recipes'}
+                  {language === 'fr' ? 'Plus de recettes' : 'More recipes'}
                 </h4>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {language === 'fr' ? 'Générez autant de recettes que vous voulez' : 'Generate as many recipes as you want'}
+                  {language === 'fr' ? '25 recettes par jour ou illimité' : '25 recipes/day or unlimited'}
                 </p>
               </div>
               
@@ -441,10 +599,10 @@ export function SubscriptionDashboard({ isOpen, onClose }: SubscriptionDashboard
                   <Zap className="w-6 h-6 text-primary" />
                 </div>
                 <h4 className="font-medium text-sm">
-                  {language === 'fr' ? 'IA Prioritaire' : 'Priority AI'}
+                  {language === 'fr' ? 'Sans publicités' : 'Ad-free'}
                 </h4>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {language === 'fr' ? 'Génération plus rapide et qualitative' : 'Faster and higher quality generation'}
+                  {language === 'fr' ? 'Expérience fluide et rapide' : 'Smooth and fast experience'}
                 </p>
               </div>
               
@@ -453,10 +611,10 @@ export function SubscriptionDashboard({ isOpen, onClose }: SubscriptionDashboard
                   <Heart className="w-6 h-6 text-primary" />
                 </div>
                 <h4 className="font-medium text-sm">
-                  {language === 'fr' ? 'Sauvegarde illimitée' : 'Unlimited storage'}
+                  {language === 'fr' ? 'Filtres avancés' : 'Advanced filters'}
                 </h4>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {language === 'fr' ? 'Gardez tous vos favoris et historique' : 'Keep all your favorites and history'}
+                  {language === 'fr' ? 'Trouvez exactement ce que vous cherchez' : 'Find exactly what you need'}
                 </p>
               </div>
               
@@ -472,6 +630,14 @@ export function SubscriptionDashboard({ isOpen, onClose }: SubscriptionDashboard
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Stripe Notice */}
+          <div className="p-4 bg-muted/50 text-center text-xs text-muted-foreground border-t">
+            <Shield className="w-4 h-4 inline mr-1" />
+            {language === 'fr' 
+              ? 'Paiements sécurisés par Stripe. Annulation à tout moment.'
+              : 'Secure payments by Stripe. Cancel anytime.'}
           </div>
         </motion.div>
       </motion.div>

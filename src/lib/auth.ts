@@ -73,13 +73,22 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id
         token.email = user.email
         token.plan = (user as any).plan || 'free'
         token.role = (user as any).role || 'user'
       }
+      
+      // On session update, fetch fresh plan from database
+      if (trigger === 'update' && token.id) {
+        const subscription = await db.subscription.findUnique({
+          where: { userId: token.id as string }
+        })
+        token.plan = subscription?.plan || 'free'
+      }
+      
       return token
     },
     async session({ session, token }) {
