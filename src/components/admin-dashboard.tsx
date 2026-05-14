@@ -146,6 +146,8 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
   const [showFeedModal, setShowFeedModal] = useState(false)
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [selectedAd, setSelectedAd] = useState<Ad | null>(null)
+  const [isEditMode, setIsEditMode] = useState(false)
 
   // Fetch data based on tab
   useEffect(() => {
@@ -392,19 +394,50 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
   // Create new ad
   const handleCreateAd = async (adData: Partial<Ad>) => {
     try {
-      const res = await fetch('/api/admin/ads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(adData)
-      })
-      if (res.ok) {
-        toast({ title: language === 'fr' ? 'Publicité créée' : 'Ad created' })
-        setShowAdModal(false)
-        fetchAds()
+      if (isEditMode && selectedAd) {
+        // Update existing ad
+        const res = await fetch(`/api/admin/ads/${selectedAd.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(adData)
+        })
+        if (res.ok) {
+          toast({ title: language === 'fr' ? 'Publicité mise à jour' : 'Ad updated' })
+          setShowAdModal(false)
+          setSelectedAd(null)
+          setIsEditMode(false)
+          fetchAds()
+        }
+      } else {
+        // Create new ad
+        const res = await fetch('/api/admin/ads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(adData)
+        })
+        if (res.ok) {
+          toast({ title: language === 'fr' ? 'Publicité créée' : 'Ad created' })
+          setShowAdModal(false)
+          fetchAds()
+        }
       }
     } catch (err) {
       toast({ title: language === 'fr' ? 'Erreur' : 'Error', variant: 'destructive' })
     }
+  }
+
+  // Open edit modal for ad
+  const handleEditAd = (ad: Ad) => {
+    setSelectedAd(ad)
+    setIsEditMode(true)
+    setShowAdModal(true)
+  }
+
+  // Open create modal for ad
+  const handleOpenCreateAd = () => {
+    setSelectedAd(null)
+    setIsEditMode(false)
+    setShowAdModal(true)
   }
 
   // Create new feed item
@@ -791,7 +824,7 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <h2 className="font-serif text-xl font-bold">{t('ads')}</h2>
-                    <Button onClick={() => setShowAdModal(true)}>
+                    <Button onClick={handleOpenCreateAd}>
                       <Plus className="w-4 h-4 mr-1" />
                       {t('createAd')}
                     </Button>
@@ -837,6 +870,13 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEditAd(ad)}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -1203,8 +1243,14 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
       <React.Fragment key="ad-modal">
       <AdModal
         isOpen={showAdModal}
-        onClose={() => setShowAdModal(false)}
+        onClose={() => {
+          setShowAdModal(false)
+          setSelectedAd(null)
+          setIsEditMode(false)
+        }}
         onCreate={handleCreateAd}
+        editAd={selectedAd}
+        isEditMode={isEditMode}
         language={language}
       />
       </React.Fragment>
@@ -1254,10 +1300,21 @@ function UserModal({ isOpen, onClose, user, onUpdateSubscription, onGrantBonus, 
   if (!isOpen || !user) return null
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
-      <Card className="w-full max-w-md" onClick={e => e.stopPropagation()}>
-        <CardHeader>
+    <div 
+      className="fixed inset-0 z-[150] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
+      onClick={onClose}
+      style={{ pointerEvents: 'auto' }}
+    >
+      <Card 
+        className="w-full max-w-md" 
+        onClick={e => e.stopPropagation()}
+        style={{ pointerEvents: 'auto' }}
+      >
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{language === 'fr' ? 'Gérer l\'utilisateur' : 'Manage user'}</CardTitle>
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+            <X className="w-4 h-4" />
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -1316,10 +1373,12 @@ function UserModal({ isOpen, onClose, user, onUpdateSubscription, onGrantBonus, 
   )
 }
 
-function AdModal({ isOpen, onClose, onCreate, language }: {
+function AdModal({ isOpen, onClose, onCreate, editAd, isEditMode, language }: {
   isOpen: boolean
   onClose: () => void
   onCreate: (data: Partial<Ad>) => void
+  editAd: Ad | null
+  isEditMode: boolean
   language: string
 }) {
   const [formData, setFormData] = useState({
@@ -1334,6 +1393,35 @@ function AdModal({ isOpen, onClose, onCreate, language }: {
     priority: 0
   })
 
+  // Populate form when editing
+  React.useEffect(() => {
+    if (isEditMode && editAd) {
+      setFormData({
+        title: editAd.title || '',
+        description: editAd.description || '',
+        imageUrl: editAd.imageUrl || '',
+        linkUrl: editAd.linkUrl || '',
+        buttonText: editAd.buttonText || '',
+        type: editAd.type || 'banner',
+        targetTiers: editAd.targetTiers || '["free"]',
+        targetCountries: editAd.targetCountries ? JSON.parse(editAd.targetCountries).join(', ') : '',
+        priority: editAd.priority || 0
+      })
+    } else {
+      setFormData({
+        title: '',
+        description: '',
+        imageUrl: '',
+        linkUrl: '',
+        buttonText: '',
+        type: 'banner',
+        targetTiers: '["free"]',
+        targetCountries: '',
+        priority: 0
+      })
+    }
+  }, [isEditMode, editAd, isOpen])
+
   if (!isOpen) return null
 
   const handleSubmit = () => {
@@ -1345,10 +1433,21 @@ function AdModal({ isOpen, onClose, onCreate, language }: {
   }
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
-      <Card className="w-full max-w-md max-h-[90vh] overflow-auto" onClick={e => e.stopPropagation()}>
-        <CardHeader>
-          <CardTitle>{language === 'fr' ? 'Créer une publicité' : 'Create ad'}</CardTitle>
+    <div 
+      className="fixed inset-0 z-[150] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
+      onClick={onClose}
+      style={{ pointerEvents: 'auto' }}
+    >
+      <Card 
+        className="w-full max-w-md max-h-[90vh] overflow-auto" 
+        onClick={e => e.stopPropagation()}
+        style={{ pointerEvents: 'auto' }}
+      >
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>{isEditMode ? (language === 'fr' ? 'Modifier la publicité' : 'Edit ad') : (language === 'fr' ? 'Créer une publicité' : 'Create ad')}</CardTitle>
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+            <X className="w-4 h-4" />
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
@@ -1362,12 +1461,12 @@ function AdModal({ isOpen, onClose, onCreate, language }: {
             onChange={e => setFormData({ ...formData, description: e.target.value })}
           />
           <Input
-            placeholder="URL de l'image"
+            placeholder="URL de l'image (ex: https://...)"
             value={formData.imageUrl}
             onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
           />
           <Input
-            placeholder="URL du lien"
+            placeholder="URL du lien (ex: https://worrybee.com)"
             value={formData.linkUrl}
             onChange={e => setFormData({ ...formData, linkUrl: e.target.value })}
           />
@@ -1379,7 +1478,7 @@ function AdModal({ isOpen, onClose, onCreate, language }: {
           <select
             value={formData.type}
             onChange={e => setFormData({ ...formData, type: e.target.value })}
-            className="w-full p-2 border rounded-lg"
+            className="w-full p-2 border rounded-lg bg-background"
           >
             <option value="banner">Banner</option>
             <option value="popup">Popup</option>
@@ -1395,10 +1494,10 @@ function AdModal({ isOpen, onClose, onCreate, language }: {
             type="number"
             placeholder={language === 'fr' ? 'Priorité' : 'Priority'}
             value={formData.priority}
-            onChange={e => setFormData({ ...formData, priority: parseInt(e.target.value) })}
+            onChange={e => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
           />
           <Button onClick={handleSubmit} className="w-full">
-            {language === 'fr' ? 'Créer' : 'Create'}
+            {isEditMode ? (language === 'fr' ? 'Mettre à jour' : 'Update') : (language === 'fr' ? 'Créer' : 'Create')}
           </Button>
         </CardContent>
       </Card>
@@ -1430,10 +1529,21 @@ function FeedModal({ isOpen, onClose, onCreate, language }: {
   }
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
-      <Card className="w-full max-w-md max-h-[90vh] overflow-auto" onClick={e => e.stopPropagation()}>
-        <CardHeader>
+    <div 
+      className="fixed inset-0 z-[150] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
+      onClick={onClose}
+      style={{ pointerEvents: 'auto' }}
+    >
+      <Card 
+        className="w-full max-w-md max-h-[90vh] overflow-auto" 
+        onClick={e => e.stopPropagation()}
+        style={{ pointerEvents: 'auto' }}
+      >
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{language === 'fr' ? 'Créer un article' : 'Create feed item'}</CardTitle>
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+            <X className="w-4 h-4" />
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
@@ -1517,10 +1627,21 @@ function AnnouncementModal({ isOpen, onClose, onCreate, language }: {
   }
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
-      <Card className="w-full max-w-md" onClick={e => e.stopPropagation()}>
-        <CardHeader>
+    <div 
+      className="fixed inset-0 z-[150] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
+      onClick={onClose}
+      style={{ pointerEvents: 'auto' }}
+    >
+      <Card 
+        className="w-full max-w-md" 
+        onClick={e => e.stopPropagation()}
+        style={{ pointerEvents: 'auto' }}
+      >
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{language === 'fr' ? 'Créer une annonce' : 'Create announcement'}</CardTitle>
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+            <X className="w-4 h-4" />
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <Input

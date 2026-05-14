@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ExternalLink, Sparkles, Loader2 } from 'lucide-react'
+import { ExternalLink, Sparkles, Loader2, Megaphone } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 
 interface AdData {
@@ -55,6 +55,19 @@ interface NativeAdBannerProps {
   compact?: boolean
 }
 
+// Helper to ensure URL has protocol
+const normalizeUrl = (url: string | null | undefined): string => {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  return `https://${url}`
+}
+
+// Helper to check if image URL is valid
+const hasValidImage = (url: string | null | undefined): boolean => {
+  if (!url) return false
+  return url.trim().length > 0 && url.startsWith('http')
+}
+
 export function NativeAdBanner({ 
   position = 'middle', 
   className = '',
@@ -94,9 +107,10 @@ export function NativeAdBanner({
     } catch (error) {
       console.error('Error recording click:', error)
     }
-    // Open link in new tab
-    if (linkUrl) {
-      window.open(linkUrl, '_blank', 'noopener')
+    // Open link in new tab with normalized URL
+    const normalizedUrl = normalizeUrl(linkUrl)
+    if (normalizedUrl) {
+      window.open(normalizedUrl, '_blank', 'noopener,noreferrer')
     }
     setClickedAd(null)
   }
@@ -113,6 +127,7 @@ export function NativeAdBanner({
     // Select ad based on position (rotate through available ads)
     const adIndex = position === 'top' ? 0 : position === 'middle' ? 1 % ads.length : 2 % ads.length
     const currentAd = ads[adIndex] || ads[0]
+    const validImage = hasValidImage(currentAd.imageUrl)
 
     if (compact) {
       return (
@@ -122,15 +137,15 @@ export function NativeAdBanner({
           className={`block cursor-pointer ${className}`}
         >
           <div className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/50 hover:bg-card transition-colors">
-            {currentAd.imageUrl ? (
+            {validImage ? (
               <img 
-                src={currentAd.imageUrl} 
+                src={currentAd.imageUrl!} 
                 alt={currentAd.title}
                 className="w-10 h-10 rounded-lg object-cover shrink-0"
               />
             ) : (
               <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl shrink-0 bg-primary/10">
-                <Sparkles className="w-5 h-5 text-primary" />
+                <Megaphone className="w-5 h-5 text-primary" />
               </div>
             )}
             <div className="flex-1 min-w-0">
@@ -164,9 +179,9 @@ export function NativeAdBanner({
 
           <div className="relative flex items-center gap-4 p-4">
             {/* Image or Logo */}
-            {currentAd.imageUrl ? (
+            {validImage ? (
               <motion.img
-                src={currentAd.imageUrl}
+                src={currentAd.imageUrl!}
                 alt={currentAd.title}
                 whileHover={{ scale: 1.05 }}
                 className="w-16 h-16 rounded-2xl object-cover shrink-0 shadow-md"
@@ -174,9 +189,9 @@ export function NativeAdBanner({
             ) : (
               <motion.div
                 whileHover={{ scale: 1.05, rotate: 5 }}
-                className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shrink-0 shadow-md bg-primary/20"
+                className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-md bg-primary/20"
               >
-                <Sparkles className="w-8 h-8 text-primary" />
+                <Megaphone className="w-8 h-8 text-primary" />
               </motion.div>
             )}
 
@@ -356,7 +371,7 @@ export function CompactAdStrip({ className = '' }: { className?: string }) {
         {ads.slice(0, 3).map((ad, index) => (
           <motion.a
             key={ad.id}
-            href={ad.linkUrl || '#'}
+            href={normalizeUrl(ad.linkUrl)}
             target="_blank"
             rel="noopener noreferrer nofollow"
             initial={{ opacity: 0, x: -10 }}
@@ -364,10 +379,10 @@ export function CompactAdStrip({ className = '' }: { className?: string }) {
             transition={{ delay: index * 0.1 }}
             className="flex items-center gap-2 p-2 rounded-lg border border-border/30 bg-card/50 hover:bg-card transition-colors"
           >
-            {ad.imageUrl ? (
-              <img src={ad.imageUrl} alt={ad.title} className="w-6 h-6 rounded object-cover" />
+            {hasValidImage(ad.imageUrl) ? (
+              <img src={ad.imageUrl!} alt={ad.title} className="w-6 h-6 rounded object-cover" />
             ) : (
-              <Sparkles className="w-5 h-5 text-primary" />
+              <Megaphone className="w-5 h-5 text-primary" />
             )}
             <span className="text-sm font-medium truncate flex-1">{ad.title}</span>
             <ExternalLink className="w-3 h-3 text-muted-foreground" />
