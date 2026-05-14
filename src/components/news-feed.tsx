@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { 
   Newspaper, ExternalLink, Heart, ChefHat, X,
-  TrendingUp, Lightbulb, Sparkles, Tag, Calendar, Eye
+  TrendingUp, Lightbulb, Sparkles, Tag, Calendar, Eye,
+  AlertCircle, ArrowRightCircle
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 
@@ -28,6 +29,7 @@ interface NewsFeedProps {
   country?: string
   limit?: number
   compact?: boolean
+  onGoToCooking?: () => void
 }
 
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -40,18 +42,18 @@ const categoryIcons: Record<string, React.ReactNode> = {
 
 const categoryColors: Record<string, string> = {
   tip: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  news: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  news: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
   recipe: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
   promotion: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  trending: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+  trending: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
 }
 
 const categoryLabels: Record<string, { fr: string; en: string }> = {
   tip: { fr: 'Astuce', en: 'Tip' },
   news: { fr: 'Actualité', en: 'News' },
   recipe: { fr: 'Recette', en: 'Recipe' },
-  promotion: { fr: 'Promotion', en: 'Promotion' },
-  trending: { fr: 'Tendance', en: 'Trending' }
+  trending: { fr: 'Tendance', en: 'Trending' },
+  promotion: { fr: 'Promotion', en: 'Promotion' }
 }
 
 function formatTimeAgo(dateString: string, language: string): string {
@@ -81,7 +83,7 @@ function formatDate(dateString: string, language: string): string {
   })
 }
 
-export function NewsFeed({ country, limit = 5, compact = false }: NewsFeedProps) {
+export function NewsFeed({ country, limit = 5, compact = false, onGoToCooking }: NewsFeedProps) {
   const { language } = useI18n()
   const [feed, setFeed] = useState<FeedItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -133,6 +135,10 @@ export function NewsFeed({ country, limit = 5, compact = false }: NewsFeedProps)
       setFeed(prev => prev.map(item => 
         item.id === feedId ? { ...item, likes: item.likes + 1 } : item
       ))
+      // Also update selected item if it's the one being liked
+      setSelectedItem(prev => 
+        prev && prev.id === feedId ? { ...prev, likes: prev.likes + 1 } : prev
+      )
     } catch (err) {
       console.error('Failed to record like:', err)
     }
@@ -140,11 +146,13 @@ export function NewsFeed({ country, limit = 5, compact = false }: NewsFeedProps)
 
   const handleItemClick = (item: FeedItem) => {
     handleView(item.id)
-    if (item.linkUrl) {
-      window.open(item.linkUrl, '_blank', 'noopener')
-    } else {
-      setSelectedItem(item)
-    }
+    // Always open modal for all categories
+    setSelectedItem(item)
+  }
+
+  const handleGoToCooking = () => {
+    setSelectedItem(null)
+    onGoToCooking?.()
   }
 
   if (loading) {
@@ -184,9 +192,7 @@ export function NewsFeed({ country, limit = 5, compact = false }: NewsFeedProps)
                 {formatTimeAgo(item.publishAt, language)}
               </p>
             </div>
-            {item.linkUrl && (
-              <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-            )}
+            <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
           </motion.button>
         ))}
       </div>
@@ -316,9 +322,36 @@ export function NewsFeed({ country, limit = 5, compact = false }: NewsFeedProps)
                 
                 <h2 className="font-serif text-xl font-bold mb-4">{selectedItem.title}</h2>
                 
-                <ScrollArea className="max-h-[40vh]">
+                <ScrollArea className="max-h-[30vh]">
                   <div className="prose prose-sm dark:prose-invert">
-                    <p className="text-muted-foreground whitespace-pre-wrap">{selectedItem.content}</p>
+                    {/* For news: show summary only (respect copyright) */}
+                    {selectedItem.category === 'news' ? (
+                      <div className="space-y-4">
+                        <p className="text-muted-foreground whitespace-pre-wrap">{selectedItem.content}</p>
+                        
+                        {/* Copyright notice for news */}
+                        <div className="mt-4 p-4 bg-muted/50 rounded-lg border border-border">
+                          <div className="flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-sm font-medium mb-1">
+                                {language === 'fr' 
+                                  ? 'Ceci est un résumé de l\'article original.' 
+                                  : 'This is a summary of the original article.'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {language === 'fr' 
+                                  ? 'Pour lire l\'article complet et soutenir l\'auteur, veuillez visiter le site source.'
+                                  : 'To read the full article and support the author, please visit the source website.'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      /* For tips, recipes, trending: show full content */
+                      <p className="text-muted-foreground whitespace-pre-wrap">{selectedItem.content}</p>
+                    )}
                   </div>
                 </ScrollArea>
                 
@@ -336,15 +369,37 @@ export function NewsFeed({ country, limit = 5, compact = false }: NewsFeedProps)
                       {selectedItem.views} {language === 'fr' ? 'vues' : 'views'}
                     </span>
                   </div>
-                  
-                  {selectedItem.linkUrl && (
-                    <Button
-                      size="sm"
-                      onClick={() => window.open(selectedItem.linkUrl!, '_blank', 'noopener')}
-                    >
-                      {language === 'fr' ? 'Voir le lien' : 'View link'}
-                      <ExternalLink className="w-4 h-4 ml-1" />
-                    </Button>
+                </div>
+                
+                {/* Action buttons based on category */}
+                <div className="mt-4 pt-4 border-t">
+                  {selectedItem.category === 'news' ? (
+                    /* News: Link to original article */
+                    selectedItem.linkUrl ? (
+                      <Button
+                        className="w-full"
+                        onClick={() => window.open(selectedItem.linkUrl!, '_blank', 'noopener')}
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        {language === 'fr' ? 'Lire l\'article complet' : 'Read full article'}
+                      </Button>
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center">
+                        {language === 'fr' ? 'Lien non disponible' : 'Link not available'}
+                      </p>
+                    )
+                  ) : (
+                    /* Tips, Recipes, Trending: Go to cooking space */
+                    onGoToCooking && (
+                      <Button
+                        className="w-full"
+                        onClick={handleGoToCooking}
+                      >
+                        <ChefHat className="w-4 h-4 mr-2" />
+                        {language === 'fr' ? 'Passer à la cuisine' : 'Go to cooking'}
+                        <ArrowRightCircle className="w-4 h-4 ml-2" />
+                      </Button>
+                    )
                   )}
                 </div>
               </div>

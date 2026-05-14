@@ -9,7 +9,8 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { 
   Clock, Heart, Eye, TrendingUp, Flame, Sparkles, 
   ChefHat, Utensils, Globe, Share2, Play,
-  ChevronRight, ArrowRight, BookOpen, X, Calendar, ExternalLink
+  ChevronRight, ArrowRight, BookOpen, X, Calendar, ExternalLink,
+  AlertCircle, ArrowRightCircle
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { toast } from '@/hooks/use-toast'
@@ -32,6 +33,7 @@ interface NewsItem {
 interface NewsFeedHeroProps {
   onSignUpClick: () => void
   isAuthenticated: boolean
+  onGoToCooking: () => void
 }
 
 // High-quality food images from Unsplash
@@ -51,7 +53,7 @@ const categoryLabels: Record<string, { fr: string; en: string }> = {
   promotion: { fr: 'Promotion', en: 'Promotion' }
 }
 
-export function NewsFeedHero({ onSignUpClick, isAuthenticated }: NewsFeedHeroProps) {
+export function NewsFeedHero({ onSignUpClick, isAuthenticated, onGoToCooking }: NewsFeedHeroProps) {
   const { language } = useI18n()
   const [feed, setFeed] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -161,7 +163,7 @@ export function NewsFeedHero({ onSignUpClick, isAuthenticated }: NewsFeedHeroPro
         ? 'Interview exclusive avec la cheffe étoilée qui révolutionne la cuisine française...'
         : 'Exclusive interview with the starred chef revolutionizing French cuisine...',
       imageUrl: CATEGORY_IMAGES.news,
-      linkUrl: null,
+      linkUrl: 'https://example.com/chef-marie-interview',
       category: 'news',
       active: true,
       featured: false,
@@ -189,7 +191,6 @@ export function NewsFeedHero({ onSignUpClick, isAuthenticated }: NewsFeedHeroPro
         item.id === itemId ? { ...item, likes: item.likes + 1 } : item
       ))
       
-      // Also update selected item if it's the one being liked
       setSelectedItem(prev => 
         prev && prev.id === itemId ? { ...prev, likes: prev.likes + 1 } : prev
       )
@@ -218,12 +219,13 @@ export function NewsFeedHero({ onSignUpClick, isAuthenticated }: NewsFeedHeroPro
       // Ignore view errors
     }
     
-    // Open item
-    if (item.linkUrl) {
-      window.open(item.linkUrl, '_blank', 'noopener')
-    } else {
-      setSelectedItem(item)
-    }
+    // Always open modal for all categories
+    setSelectedItem(item)
+  }
+
+  const handleGoToCooking = () => {
+    setSelectedItem(null)
+    onGoToCooking()
   }
 
   const formatNumber = (num: number) => {
@@ -254,6 +256,10 @@ export function NewsFeedHero({ onSignUpClick, isAuthenticated }: NewsFeedHeroPro
 
   const getCategoryLabel = (category: string) => {
     return categoryLabels[category]?.[language as 'fr' | 'en'] || category
+  }
+
+  const isCookingCategory = (category: string) => {
+    return ['tip', 'recipe', 'trending'].includes(category)
   }
 
   const loadMore = () => {
@@ -568,9 +574,36 @@ export function NewsFeedHero({ onSignUpClick, isAuthenticated }: NewsFeedHeroPro
                 
                 <h2 className="font-serif text-xl font-bold mb-4">{selectedItem.title}</h2>
                 
-                <ScrollArea className="max-h-[40vh]">
+                <ScrollArea className="max-h-[30vh]">
                   <div className="prose prose-sm dark:prose-invert">
-                    <p className="text-muted-foreground whitespace-pre-wrap">{selectedItem.content}</p>
+                    {/* For news: show summary only (respect copyright) */}
+                    {selectedItem.category === 'news' ? (
+                      <div className="space-y-4">
+                        <p className="text-muted-foreground whitespace-pre-wrap">{selectedItem.content}</p>
+                        
+                        {/* Copyright notice for news */}
+                        <div className="mt-4 p-4 bg-muted/50 rounded-lg border border-border">
+                          <div className="flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-sm font-medium mb-1">
+                                {language === 'fr' 
+                                  ? 'Ceci est un résumé de l\'article original.' 
+                                  : 'This is a summary of the original article.'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {language === 'fr' 
+                                  ? 'Pour lire l\'article complet et soutenir l\'auteur, veuillez visiter le site source.'
+                                  : 'To read the full article and support the author, please visit the source website.'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      /* For tips, recipes, trending: show full content */
+                      <p className="text-muted-foreground whitespace-pre-wrap">{selectedItem.content}</p>
+                    )}
                   </div>
                 </ScrollArea>
                 
@@ -588,14 +621,34 @@ export function NewsFeedHero({ onSignUpClick, isAuthenticated }: NewsFeedHeroPro
                       {formatNumber(selectedItem.views)} {language === 'fr' ? 'vues' : 'views'}
                     </span>
                   </div>
-                  
-                  {selectedItem.linkUrl && (
+                </div>
+                
+                {/* Action buttons based on category */}
+                <div className="mt-4 pt-4 border-t">
+                  {selectedItem.category === 'news' ? (
+                    /* News: Link to original article */
+                    selectedItem.linkUrl ? (
+                      <Button
+                        className="w-full"
+                        onClick={() => window.open(selectedItem.linkUrl!, '_blank', 'noopener')}
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        {language === 'fr' ? 'Lire l\'article complet' : 'Read full article'}
+                      </Button>
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center">
+                        {language === 'fr' ? 'Lien non disponible' : 'Link not available'}
+                      </p>
+                    )
+                  ) : (
+                    /* Tips, Recipes, Trending: Go to cooking space */
                     <Button
-                      size="sm"
-                      onClick={() => window.open(selectedItem.linkUrl!, '_blank', 'noopener')}
+                      className="w-full"
+                      onClick={handleGoToCooking}
                     >
-                      {language === 'fr' ? 'Voir le lien' : 'View link'}
-                      <ExternalLink className="w-4 h-4 ml-1" />
+                      <ChefHat className="w-4 h-4 mr-2" />
+                      {language === 'fr' ? 'Passer à la cuisine' : 'Go to cooking'}
+                      <ArrowRightCircle className="w-4 h-4 ml-2" />
                     </Button>
                   )}
                 </div>

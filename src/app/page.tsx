@@ -666,6 +666,7 @@ export default function Home() {
           <NewsFeedHero 
             onSignUpClick={() => setShowAuthModal(true)}
             isAuthenticated={isAuthenticated}
+            onGoToCooking={() => setShowRecipeSection(true)}
           />
           
           {/* Native Ad for non-authenticated users */}
