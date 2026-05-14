@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { 
   X, Users, Crown, TrendingUp, Megaphone, Newspaper, BarChart3,
   Plus, Edit, Trash2, Search, Filter, Eye, MousePointer, Gift,
@@ -596,7 +595,7 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
           </div>
 
           {/* Content */}
-          <ScrollArea className="flex-1">
+          <div className="flex-1 overflow-y-auto">
             <div className="p-6">
               {/* Overview Tab */}
               {activeTab === 'overview' && analytics && (
@@ -1277,7 +1276,7 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
         </motion.div>
 
         {/* Side panel for ads/feed on the right */}
