@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import ZAI from 'z-ai-web-dev-sdk'
+
+// Dynamic import to avoid build-time initialization
+const getAI = async () => {
+  if (typeof window !== 'undefined') return null
+  try {
+    const ZAI = (await import('z-ai-web-dev-sdk')).default
+    return await ZAI.create({
+      token: process.env.Z_AI_TOKEN || process.env.ZAI_TOKEN
+    })
+  } catch {
+    return null
+  }
+}
 
 const SYSTEM_PROMPT = `Tu es un assistant culinaire expert spécialisé dans la création de recettes improvisées, accessibles et nutritives. Tu possèdes une connaissance approfondie des techniques de cuisine simples, des associations d'ingrédients, et tu excelles dans l'adaptation de recettes pour les cuisiniers amateurs.
 
@@ -238,9 +250,13 @@ export async function POST(request: NextRequest) {
 
     // Try AI generation
     try {
-      const zai = await ZAI.create({
-        token: process.env.Z_AI_TOKEN || process.env.ZAI_TOKEN
-      })
+      const zai = await getAI()
+
+      if (!zai) {
+        console.log('🤖 AI unavailable, using demo mode')
+        const recipes = generateDemoRecipes(ingredients, preferences)
+        return NextResponse.json({ recipes, demoMode: true })
+      }
 
       // Build prompt with dietary preferences
       let preferencesText = ''

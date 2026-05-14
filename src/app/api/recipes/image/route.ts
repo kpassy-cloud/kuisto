@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import ZAI from 'z-ai-web-dev-sdk'
+
+// Dynamic import to avoid build-time initialization
+const getAI = async () => {
+  if (typeof window !== 'undefined') return null
+  try {
+    const ZAI = (await import('z-ai-web-dev-sdk')).default
+    return await ZAI.create({
+      token: process.env.Z_AI_TOKEN || process.env.ZAI_TOKEN
+    })
+  } catch {
+    return null
+  }
+}
 
 // Demo image URLs (placeholder food images)
 const DEMO_IMAGES = [
@@ -36,9 +48,17 @@ export async function POST(request: NextRequest) {
 
     // Try AI image generation
     try {
-      const zai = await ZAI.create({
-        token: process.env.Z_AI_TOKEN || process.env.ZAI_TOKEN
-      })
+      const zai = await getAI()
+
+      if (!zai) {
+        console.log('🎨 AI unavailable, using demo image')
+        const imageIndex = recipeName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % DEMO_IMAGES.length
+        const demoImageUrl = DEMO_IMAGES[imageIndex]
+        return NextResponse.json({
+          image: demoImageUrl,
+          demoMode: true
+        })
+      }
 
       // Generate image prompt
       const mainIngredients = (ingredients || []).slice(0, 5).join(', ')
