@@ -2,16 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 
-// POST /api/auth/register - Register a new user
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { email, password, name } = body
 
-    // Normalize email
     const normalizedEmail = email?.toLowerCase().trim()
 
-    // Validation
     if (!normalizedEmail || !normalizedEmail.includes('@')) {
       return NextResponse.json(
         { error: 'EMAIL_INVALID', message: 'Adresse email invalide' },
@@ -26,7 +23,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if user already exists
     const existingUser = await db.user.findUnique({
       where: { email: normalizedEmail }
     })
@@ -38,12 +34,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Use transaction to create user with all related data atomically
     const user = await db.$transaction(async (tx) => {
-      // Create user
       const newUser = await tx.user.create({
         data: {
           email: normalizedEmail,
@@ -52,12 +45,10 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      // Create default preferences
       await tx.userPreferences.create({
         data: { userId: newUser.id }
       })
 
-      // Create free subscription
       await tx.subscription.create({
         data: { 
           userId: newUser.id,

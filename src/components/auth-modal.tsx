@@ -87,7 +87,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     // Retry logic for DB replication delay
     let loginSuccess = false
     let attempts = 0
-    const maxAttempts = 3
+    const maxAttempts = 5
     
     while (!loginSuccess && attempts < maxAttempts) {
       const result = await login(normalizedEmail, password)
@@ -96,22 +96,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         loginSuccess = true
       } else {
         attempts++
-        // Only show specific error messages on final attempt
         if (attempts >= maxAttempts) {
-          // Handle NextAuth errors
-          if (result.error === 'CredentialsSignin' || result.error === 'USER_NOT_FOUND') {
-            setError(language === 'fr' ? 'Aucun compte trouvé avec cette adresse email' : 'No account found with this email address')
-          } else if (result.error === 'INVALID_PASSWORD') {
-            setError(language === 'fr' ? 'Mot de passe incorrect' : 'Incorrect password')
-          } else if (result.error === 'PASSWORD_NOT_SET') {
-            setError(language === 'fr' ? 'Ce compte nécessite une réinitialisation du mot de passe' : 'This account requires password reset')
-            setTimeout(() => setView('forgot-password'), 1500)
-          } else {
-            setError(language === 'fr' ? 'Erreur de connexion' : 'Login error')
-          }
+          setError(language === 'fr' ? 'Email ou mot de passe incorrect' : 'Incorrect email or password')
         } else {
-          // Wait before retrying
-          await new Promise(resolve => setTimeout(resolve, 500 * attempts))
+          await new Promise(resolve => setTimeout(resolve, 300 * attempts))
         }
       }
     }
@@ -125,8 +113,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       resetForm()
     }
   }
-
-  const handleRegister = async (e: React.FormEvent) => {
+   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
@@ -148,7 +135,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setIsRegistering(true)
 
     try {
-      // Normalize email before sending
       const normalizedEmail = email.toLowerCase().trim()
       
       const response = await fetch('/api/auth/register', {
@@ -176,8 +162,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         return
       }
 
-      // Auto login after registration with retry logic
-      // Longer delay to ensure DB replication (especially for pooled connections)
       await new Promise(resolve => setTimeout(resolve, 800))
       
       let loginSuccess = false
@@ -192,14 +176,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         } else {
           loginAttempts++
           if (loginAttempts < maxAttempts) {
-            // Wait a bit more before retrying
             await new Promise(resolve => setTimeout(resolve, 400 * loginAttempts))
           }
         }
       }
       
       if (!loginSuccess) {
-        // Account created but auto-login failed - user can login manually
         setSuccess(language === 'fr' 
           ? 'Compte créé avec succès ! Veuillez vous connecter.' 
           : 'Account created successfully! Please sign in.')
@@ -219,7 +201,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setIsRegistering(false)
     }
   }
-
+  
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
