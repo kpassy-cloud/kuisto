@@ -83,25 +83,40 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
     // Normalize email before login
     const normalizedEmail = email.toLowerCase().trim()
-    const result = await login(normalizedEmail, password)
     
-    if (result?.error) {
-      switch (result.error) {
-        case 'USER_NOT_FOUND':
-          setError(language === 'fr' ? 'Aucun compte trouvé avec cette adresse email' : 'No account found with this email address')
-          break
-        case 'INVALID_PASSWORD':
-          setError(language === 'fr' ? 'Mot de passe incorrect' : 'Incorrect password')
-          break
-        case 'PASSWORD_NOT_SET':
-          setError(language === 'fr' ? 'Ce compte nécessite une réinitialisation du mot de passe' : 'This account requires password reset')
-          // Auto-switch to forgot password
-          setTimeout(() => setView('forgot-password'), 1500)
-          break
-        default:
-          setError(language === 'fr' ? 'Erreur de connexion' : 'Login error')
+    // Retry logic for DB replication delay
+    let loginSuccess = false
+    let attempts = 0
+    const maxAttempts = 3
+    
+    while (!loginSuccess && attempts < maxAttempts) {
+      const result = await login(normalizedEmail, password)
+      
+      if (!result?.error) {
+        loginSuccess = true
+      } else {
+        attempts++
+        // Only show specific error messages on final attempt
+        if (attempts >= maxAttempts) {
+          // Handle NextAuth errors
+          if (result.error === 'CredentialsSignin' || result.error === 'USER_NOT_FOUND') {
+            setError(language === 'fr' ? 'Aucun compte trouvé avec cette adresse email' : 'No account found with this email address')
+          } else if (result.error === 'INVALID_PASSWORD') {
+            setError(language === 'fr' ? 'Mot de passe incorrect' : 'Incorrect password')
+          } else if (result.error === 'PASSWORD_NOT_SET') {
+            setError(language === 'fr' ? 'Ce compte nécessite une réinitialisation du mot de passe' : 'This account requires password reset')
+            setTimeout(() => setView('forgot-password'), 1500)
+          } else {
+            setError(language === 'fr' ? 'Erreur de connexion' : 'Login error')
+          }
+        } else {
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, 500 * attempts))
+        }
       }
-    } else {
+    }
+    
+    if (loginSuccess) {
       toast({
         title: language === 'fr' ? 'Connexion réussie' : 'Login successful',
         description: language === 'fr' ? 'Bienvenue sur Kuisto !' : 'Welcome to Kuisto!'
