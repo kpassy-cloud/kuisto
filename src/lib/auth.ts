@@ -40,11 +40,25 @@ export const authOptions: NextAuthOptions = {
           throw new Error('EMAIL_PASSWORD_REQUIRED')
         }
 
-        // Find existing user
-        const user = await db.user.findUnique({
-          where: { email: credentials.email },
-          include: { subscription: true }
-        })
+        // Find existing user with retry logic for DB replication delay
+        let user = null
+        let attempts = 0
+        const maxAttempts = 3
+        const retryDelay = 300 // ms
+
+        while (!user && attempts < maxAttempts) {
+          user = await db.user.findUnique({
+            where: { email: credentials.email.toLowerCase().trim() },
+            include: { subscription: true }
+          })
+          
+          if (!user) {
+            attempts++
+            if (attempts < maxAttempts) {
+              await new Promise(resolve => setTimeout(resolve, retryDelay * attempts))
+            }
+          }
+        }
 
         if (!user) {
           throw new Error('USER_NOT_FOUND')
@@ -73,22 +87,13 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id
         token.email = user.email
         token.plan = (user as any).plan || 'free'
         token.role = (user as any).role || 'user'
       }
-      
-      // On session update, fetch fresh plan from database
-      if (trigger === 'update' && token.id) {
-        const subscription = await db.subscription.findUnique({
-          where: { userId: token.id as string }
-        })
-        token.plan = subscription?.plan || 'free'
-      }
-      
       return token
     },
     async session({ session, token }) {

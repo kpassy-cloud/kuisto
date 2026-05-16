@@ -81,7 +81,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       return
     }
 
-    const result = await login(email, password)
+    // Normalize email before login
+    const normalizedEmail = email.toLowerCase().trim()
+    const result = await login(normalizedEmail, password)
     
     if (result?.error) {
       switch (result.error) {
@@ -131,10 +133,13 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setIsRegistering(true)
 
     try {
+      // Normalize email before sending
+      const normalizedEmail = email.toLowerCase().trim()
+      
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name: name || undefined })
+        body: JSON.stringify({ email: normalizedEmail, password, name: name || undefined })
       })
 
       const data = await response.json()
@@ -156,11 +161,35 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         return
       }
 
-      // Auto login after registration
-      const result = await login(email, password)
+      // Auto login after registration with retry logic
+      // Longer delay to ensure DB replication (especially for pooled connections)
+      await new Promise(resolve => setTimeout(resolve, 800))
       
-      if (result?.error) {
-        setError(language === 'fr' ? 'Compte créé mais erreur de connexion automatique' : 'Account created but auto-login failed')
+      let loginSuccess = false
+      let loginAttempts = 0
+      const maxAttempts = 5
+      
+      while (!loginSuccess && loginAttempts < maxAttempts) {
+        const result = await login(normalizedEmail, password)
+        
+        if (!result?.error) {
+          loginSuccess = true
+        } else {
+          loginAttempts++
+          if (loginAttempts < maxAttempts) {
+            // Wait a bit more before retrying
+            await new Promise(resolve => setTimeout(resolve, 400 * loginAttempts))
+          }
+        }
+      }
+      
+      if (!loginSuccess) {
+        // Account created but auto-login failed - user can login manually
+        setSuccess(language === 'fr' 
+          ? 'Compte créé avec succès ! Veuillez vous connecter.' 
+          : 'Account created successfully! Please sign in.')
+        setActiveTab('login')
+        setError('')
       } else {
         toast({
           title: language === 'fr' ? 'Compte créé !' : 'Account created!',
@@ -718,6 +747,13 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                       <div className="flex items-center gap-2 text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
                         <AlertCircle className="w-4 h-4 shrink-0" />
                         {error}
+                      </div>
+                    )}
+
+                    {success && (
+                      <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                        <Check className="w-4 h-4 shrink-0" />
+                        {success}
                       </div>
                     )}
 

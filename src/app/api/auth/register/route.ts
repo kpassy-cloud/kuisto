@@ -8,8 +8,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { email, password, name } = body
 
+    // Normalize email
+    const normalizedEmail = email?.toLowerCase().trim()
+
     // Validation
-    if (!email || !email.includes('@')) {
+    if (!normalizedEmail || !normalizedEmail.includes('@')) {
       return NextResponse.json(
         { error: 'EMAIL_INVALID', message: 'Adresse email invalide' },
         { status: 400 }
@@ -25,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user already exists
     const existingUser = await db.user.findUnique({
-      where: { email }
+      where: { email: normalizedEmail }
     })
 
     if (existingUser) {
@@ -43,9 +46,9 @@ export async function POST(request: NextRequest) {
       // Create user
       const newUser = await tx.user.create({
         data: {
-          email,
+          email: normalizedEmail,
           password: hashedPassword,
-          name: name || email.split('@')[0],
+          name: name || normalizedEmail.split('@')[0],
         }
       })
 
