@@ -38,27 +38,32 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Create user with subscription
-    const user = await db.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name: name || email.split('@')[0],
-      }
-    })
+    // Use transaction to create user with all related data atomically
+    const user = await db.$transaction(async (tx) => {
+      // Create user
+      const newUser = await tx.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          name: name || email.split('@')[0],
+        }
+      })
 
-    // Create default preferences
-    await db.userPreferences.create({
-      data: { userId: user.id }
-    })
+      // Create default preferences
+      await tx.userPreferences.create({
+        data: { userId: newUser.id }
+      })
 
-    // Create free subscription
-    await db.subscription.create({
-      data: { 
-        userId: user.id,
-        plan: 'free',
-        status: 'active'
-      }
+      // Create free subscription
+      await tx.subscription.create({
+        data: { 
+          userId: newUser.id,
+          plan: 'free',
+          status: 'active'
+        }
+      })
+
+      return newUser
     })
 
     return NextResponse.json({
