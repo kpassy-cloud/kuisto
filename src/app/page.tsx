@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Moon, Sun, Heart, Settings, ShoppingCart, Leaf, ChefHat, Calendar, Crown, Shield, ArrowRight, UtensilsCrossed, User } from 'lucide-react'
+import { Moon, Sun, Heart, Settings, ShoppingCart, Leaf, ChefHat, Calendar, Crown, Shield, ArrowRight, UtensilsCrossed, User, Mail, FileText } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { useTheme } from 'next-themes'
 import { ShoppingListPanel } from '@/components/shopping-list-panel'
@@ -31,6 +31,10 @@ import { SignupInvitationModal } from '@/components/signup-invitation-modal'
 import { PremiumLockModal } from '@/components/premium-lock-modal'
 import { VideoAdModal } from '@/components/video-ad-modal'
 import { NativeAdBanner } from '@/components/native-ad-banner'
+import { SidebarAd } from '@/components/sidebar-ad'
+import { ContactModal } from '@/components/contact-modal'
+import { NewsletterSignup } from '@/components/newsletter-signup'
+import { ReferralPanel } from '@/components/referral-panel'
 import { useEngagementTracker } from '@/lib/hooks/useEngagementTracker'
 import { useAuth } from '@/lib/hooks/useAuth'
 
@@ -112,6 +116,12 @@ export default function Home() {
   const [premiumFeature, setPremiumFeature] = useState<{ name: string; description?: string }>({ name: '' })
   const [showVideoAd, setShowVideoAd] = useState(false)
   const [pendingFeatureUnlock, setPendingFeatureUnlock] = useState<string | null>(null)
+  
+  // Contact modal state
+  const [showContact, setShowContact] = useState(false)
+  
+  // Referral panel state
+  const [showReferral, setShowReferral] = useState(false)
 
   // Initialize
   useEffect(() => {
@@ -601,6 +611,7 @@ export default function Home() {
                   onOpenPreferences={() => setShowPreferences(true)}
                   onOpenHistory={() => setShowHistory(true)}
                   onOpenSubscription={() => setShowSubscription(true)}
+                  onOpenReferral={() => setShowReferral(true)}
                   isAdmin={isAdmin}
                   onAdminStatusChange={checkAdminStatus}
                 />
@@ -672,7 +683,11 @@ export default function Home() {
           {/* Native Ad for non-authenticated users */}
           {!isAuthenticated && (
             <div className="mt-6">
-              <NativeAdBanner position="top" />
+              <NativeAdBanner 
+                position="top" 
+                showRemoveAds={true}
+                onUpgradeClick={() => setShowAuthModal(true)}
+              />
             </div>
           )}
         </section>
@@ -716,7 +731,11 @@ export default function Home() {
                 </div>
               </div>
               <div>
-                <NativeAdBanner position="middle" />
+                <NativeAdBanner 
+                  position="middle" 
+                  showRemoveAds={true}
+                  onUpgradeClick={() => setShowAuthModal(true)}
+                />
               </div>
             </div>
           </section>
@@ -744,7 +763,7 @@ export default function Home() {
                     onClearAll={clearAllIngredients}
                   />
 
-                  <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-100px)]">
+                  <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-100px)] flex flex-col gap-4">
                     <RecipeList
                       recipes={recipes}
                       isLoading={isLoading}
@@ -759,6 +778,15 @@ export default function Home() {
                       onViewDetails={handleViewRecipeDetails}
                       isFavorite={isFavorite}
                     />
+                    
+                    {/* Sidebar Ad for free tier authenticated users */}
+                    {isAuthenticated && (
+                      <SidebarAd 
+                        onUpgradeClick={() => setShowSubscription(true)}
+                        showRemoveAds={true}
+                        variant="card"
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -864,6 +892,12 @@ export default function Home() {
         onClose={() => setShowAdminDashboard(false)}
       />
 
+      {/* Referral Panel */}
+      <ReferralPanel
+        isOpen={showReferral}
+        onClose={() => setShowReferral(false)}
+      />
+
       {/* Premium Lock Modal */}
       <PremiumLockModal
         isOpen={showPremiumLock}
@@ -883,22 +917,56 @@ export default function Home() {
       />
 
       {/* Footer */}
-      <footer className="mt-auto border-t bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary to-terracotta text-primary-foreground">
-                <ChefHat className="w-4 h-4" />
+      <footer className="mt-auto bg-zinc-900 dark:bg-black text-zinc-100">
+        <div className="container mx-auto px-4 py-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+            {/* Brand */}
+            <div className="flex items-center justify-center md:justify-start gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-terracotta text-white shadow-lg shadow-primary/30">
+                <ChefHat className="w-5 h-5" />
               </div>
-              <span className="font-serif font-semibold text-foreground">Kuisto</span>
+              <div>
+                <span className="font-serif font-bold text-xl text-white">Kuisto</span>
+                <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                  <Leaf className="w-3 h-3 text-green-400" />
+                  <span>{language === 'fr' ? 'Recettes saines' : 'Healthy recipes'}</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Leaf className="w-4 h-4 text-success" />
-              <span>{language === 'fr' ? 'Des recettes saines avec vos ingrédients' : 'Healthy recipes with your ingredients'}</span>
+            
+            {/* Newsletter Signup */}
+            <NewsletterSignup source="footer" variant="footer" />
+            
+            {/* Links */}
+            <div className="flex items-center justify-center md:justify-end gap-6 text-sm">
+              <a 
+                href="mailto:info@kuisto.ca"
+                className="text-zinc-300 hover:text-white transition-colors flex items-center gap-2 hover:bg-white/10 px-3 py-2 rounded-lg"
+              >
+                <Mail className="w-4 h-4" />
+                <span className="hidden sm:inline">info@kuisto.ca</span>
+              </a>
+              <button
+                onClick={() => setShowContact(true)}
+                className="text-zinc-300 hover:text-white transition-colors hover:bg-white/10 px-3 py-2 rounded-lg"
+              >
+                {t('contact')}
+              </button>
             </div>
+          </div>
+          
+          {/* Copyright */}
+          <div className="mt-8 pt-6 border-t border-zinc-800 text-center text-sm text-zinc-500">
+            © {new Date().getFullYear()} Kuisto. {t('allRightsReserved')}
           </div>
         </div>
       </footer>
+      
+      {/* Contact Modal */}
+      <ContactModal
+        isOpen={showContact}
+        onClose={() => setShowContact(false)}
+      />
     </div>
   )
 }
