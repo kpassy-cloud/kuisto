@@ -27,7 +27,6 @@ import {
   Facebook,
   Twitter,
   Youtube,
-  ExternalLink,
   Loader2,
   CheckCircle2,
   AlertCircle,
@@ -54,6 +53,70 @@ interface FormErrors {
   message?: string
 }
 
+// Fallback translations in case i18n fails
+const fallbackTranslations = {
+  fr: {
+    contactTitle: 'Contactez-nous',
+    contactDescription: 'Une question ? Une suggestion ? Nous sommes là pour vous aider.',
+    contactName: 'Nom',
+    contactNamePlaceholder: 'Votre nom',
+    contactEmail: 'Email',
+    contactEmailPlaceholder: 'votre@email.com',
+    contactSubject: 'Sujet',
+    contactSubjectPlaceholder: 'Sujet de votre message',
+    contactMessage: 'Message',
+    contactMessagePlaceholder: 'Décrivez votre question ou suggestion...',
+    contactSend: 'Envoyer le message',
+    contactSending: 'Envoi en cours...',
+    contactSuccess: 'Message envoyé !',
+    contactError: 'Erreur lors de l\'envoi',
+    contactRequired: 'Ce champ est requis',
+    contactInvalidEmail: 'Adresse email invalide',
+    followUs: 'Suivez-nous',
+    faqTitle: 'Foire aux questions',
+    faqHowItWorks: 'Comment fonctionne Kuisto ?',
+    faqHowItWorksAnswer: 'Sélectionnez simplement les ingrédients que vous avez dans votre cuisine, et notre IA générera des recettes personnalisées.',
+    faqFree: 'Kuisto est-il gratuit ?',
+    faqFreeAnswer: 'Oui ! Kuisto offre un plan gratuit. Pour des fonctionnalités avancées, nous proposons des abonnements Premium.',
+    faqSaveRecipes: 'Comment sauvegarder mes recettes ?',
+    faqSaveRecipesAnswer: 'Créez un compte gratuit pour sauvegarder vos favoris et vos listes de courses.',
+    faqDietary: 'Puis-je spécifier des restrictions ?',
+    faqDietaryAnswer: 'Absolument ! Vous pouvez définir vos préférences alimentaires et exclure des allergènes.',
+    faqMobile: 'Kuisto fonctionne-t-il sur mobile ?',
+    faqMobileAnswer: 'Oui, Kuisto est entièrement responsive et fonctionne parfaitement sur mobile.',
+  },
+  en: {
+    contactTitle: 'Get in Touch',
+    contactDescription: 'Have a question or suggestion? We\'re here to help.',
+    contactName: 'Name',
+    contactNamePlaceholder: 'Your name',
+    contactEmail: 'Email',
+    contactEmailPlaceholder: 'your@email.com',
+    contactSubject: 'Subject',
+    contactSubjectPlaceholder: 'Subject of your message',
+    contactMessage: 'Message',
+    contactMessagePlaceholder: 'Describe your question or suggestion...',
+    contactSend: 'Send Message',
+    contactSending: 'Sending...',
+    contactSuccess: 'Message sent!',
+    contactError: 'Error sending message',
+    contactRequired: 'This field is required',
+    contactInvalidEmail: 'Invalid email address',
+    followUs: 'Follow us',
+    faqTitle: 'FAQ',
+    faqHowItWorks: 'How does Kuisto work?',
+    faqHowItWorksAnswer: 'Simply select the ingredients you have, and our AI will generate personalized recipes.',
+    faqFree: 'Is Kuisto free?',
+    faqFreeAnswer: 'Yes! Kuisto offers a free plan. For advanced features, we offer Premium subscriptions.',
+    faqSaveRecipes: 'How do I save my recipes?',
+    faqSaveRecipesAnswer: 'Create a free account to save your favorites and shopping lists.',
+    faqDietary: 'Can I specify dietary restrictions?',
+    faqDietaryAnswer: 'Absolutely! You can set your dietary preferences and exclude allergens.',
+    faqMobile: 'Does Kuisto work on mobile?',
+    faqMobileAnswer: 'Yes, Kuisto is fully responsive and works perfectly on mobile.',
+  }
+}
+
 export function ContactModal({ isOpen, onClose }: ContactModalProps) {
   const { t, language } = useI18n()
   const [formData, setFormData] = useState<FormData>({
@@ -66,25 +129,39 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
+  // Safe translation function with fallback
+  const tr = (key: string): string => {
+    try {
+      const result = t(key as keyof typeof fallbackTranslations.fr)
+      // If the result is the same as the key, use fallback
+      if (result === key) {
+        return fallbackTranslations[language as 'fr' | 'en']?.[key as keyof typeof fallbackTranslations.fr] || key
+      }
+      return result
+    } catch {
+      return fallbackTranslations[language as 'fr' | 'en']?.[key as keyof typeof fallbackTranslations.fr] || key
+    }
+  }
+
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {}
 
     if (!formData.name.trim()) {
-      newErrors.name = t('contactRequired')
+      newErrors.name = tr('contactRequired')
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = t('contactRequired')
+      newErrors.email = tr('contactRequired')
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = t('contactInvalidEmail')
+      newErrors.email = tr('contactInvalidEmail')
     }
 
     if (!formData.subject.trim()) {
-      newErrors.subject = t('contactRequired')
+      newErrors.subject = tr('contactRequired')
     }
 
     if (!formData.message.trim()) {
-      newErrors.message = t('contactRequired')
+      newErrors.message = tr('contactRequired')
     }
 
     setErrors(newErrors)
@@ -113,7 +190,7 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
       if (response.ok) {
         setSubmitStatus('success')
         toast({
-          title: t('contactSuccess'),
+          title: tr('contactSuccess'),
           description: language === 'fr' 
             ? 'Merci de nous avoir contacté !' 
             : 'Thank you for contacting us!',
@@ -130,7 +207,7 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
       console.error('Contact form error:', error)
       setSubmitStatus('error')
       toast({
-        title: t('contactError'),
+        title: tr('contactError'),
         variant: 'destructive',
       })
     } finally {
@@ -157,11 +234,11 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
   ]
 
   const faqItems = [
-    { question: t('faqHowItWorks'), answer: t('faqHowItWorksAnswer') },
-    { question: t('faqFree'), answer: t('faqFreeAnswer') },
-    { question: t('faqSaveRecipes'), answer: t('faqSaveRecipesAnswer') },
-    { question: t('faqDietary'), answer: t('faqDietaryAnswer') },
-    { question: t('faqMobile'), answer: t('faqMobileAnswer') },
+    { question: tr('faqHowItWorks'), answer: tr('faqHowItWorksAnswer') },
+    { question: tr('faqFree'), answer: tr('faqFreeAnswer') },
+    { question: tr('faqSaveRecipes'), answer: tr('faqSaveRecipesAnswer') },
+    { question: tr('faqDietary'), answer: tr('faqDietaryAnswer') },
+    { question: tr('faqMobile'), answer: tr('faqMobileAnswer') },
   ]
 
   return (
@@ -169,10 +246,10 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-serif">
-            {t('contactTitle')}
+            {tr('contactTitle')}
           </DialogTitle>
           <DialogDescription>
-            {t('contactDescription')}
+            {tr('contactDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -198,13 +275,13 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">{t('contactName')}</Label>
+                <Label htmlFor="name">{tr('contactName')}</Label>
                 <Input
                   id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  placeholder={t('contactNamePlaceholder')}
+                  placeholder={tr('contactNamePlaceholder')}
                   className={errors.name ? 'border-destructive' : ''}
                 />
                 {errors.name && (
@@ -213,14 +290,14 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">{t('contactEmail')}</Label>
+                <Label htmlFor="email">{tr('contactEmail')}</Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  placeholder={t('contactEmailPlaceholder')}
+                  placeholder={tr('contactEmailPlaceholder')}
                   className={errors.email ? 'border-destructive' : ''}
                 />
                 {errors.email && (
@@ -230,13 +307,13 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="subject">{t('contactSubject')}</Label>
+              <Label htmlFor="subject">{tr('contactSubject')}</Label>
               <Input
                 id="subject"
                 name="subject"
                 value={formData.subject}
                 onChange={handleInputChange}
-                placeholder={t('contactSubjectPlaceholder')}
+                placeholder={tr('contactSubjectPlaceholder')}
                 className={errors.subject ? 'border-destructive' : ''}
               />
               {errors.subject && (
@@ -245,13 +322,13 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="message">{t('contactMessage')}</Label>
+              <Label htmlFor="message">{tr('contactMessage')}</Label>
               <Textarea
                 id="message"
                 name="message"
                 value={formData.message}
                 onChange={handleInputChange}
-                placeholder={t('contactMessagePlaceholder')}
+                placeholder={tr('contactMessagePlaceholder')}
                 rows={4}
                 className={errors.message ? 'border-destructive' : ''}
               />
@@ -268,22 +345,22 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {t('contactSending')}
+                  {tr('contactSending')}
                 </>
               ) : submitStatus === 'success' ? (
                 <>
                   <CheckCircle2 className="w-4 h-4 mr-2" />
-                  {t('contactSuccess')}
+                  {tr('contactSuccess')}
                 </>
               ) : submitStatus === 'error' ? (
                 <>
                   <AlertCircle className="w-4 h-4 mr-2" />
-                  {t('contactError')}
+                  {tr('contactError')}
                 </>
               ) : (
                 <>
                   <Send className="w-4 h-4 mr-2" />
-                  {t('contactSend')}
+                  {tr('contactSend')}
                 </>
               )}
             </Button>
@@ -293,7 +370,7 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
 
           {/* Social Media Links */}
           <div className="space-y-3">
-            <h3 className="font-semibold text-center">{t('followUs')}</h3>
+            <h3 className="font-semibold text-center">{tr('followUs')}</h3>
             <div className="flex justify-center gap-3">
               {socialLinks.map((social) => (
                 <Button
@@ -315,7 +392,7 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
 
           {/* FAQ Section */}
           <div className="space-y-3">
-            <h3 className="font-semibold text-lg">{t('faqTitle')}</h3>
+            <h3 className="font-semibold text-lg">{tr('faqTitle')}</h3>
             <Accordion type="single" collapsible className="w-full">
               {faqItems.map((item, index) => (
                 <AccordionItem key={index} value={`item-${index}`}>

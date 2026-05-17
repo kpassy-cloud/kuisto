@@ -13,6 +13,26 @@ interface NewsletterSignupProps {
   className?: string
 }
 
+// Fallback translations
+const fallbackTranslations = {
+  fr: {
+    newsletterTitle: 'Newsletter',
+    newsletterDescription: 'Recevez nos meilleures recettes et conseils culinaires',
+    emailPlaceholder: 'Votre email',
+    subscribeButton: 'S\'inscrire',
+    subscribeSuccess: 'Inscription réussie !',
+    privacyNote: 'Nous respectons votre vie privée. Pas de spam.',
+  },
+  en: {
+    newsletterTitle: 'Newsletter',
+    newsletterDescription: 'Get our best recipes and cooking tips',
+    emailPlaceholder: 'Your email',
+    subscribeButton: 'Subscribe',
+    subscribeSuccess: 'Successfully subscribed!',
+    privacyNote: 'We respect your privacy. No spam.',
+  }
+}
+
 export function NewsletterSignup({ 
   source = 'footer', 
   variant = 'footer',
@@ -22,6 +42,19 @@ export function NewsletterSignup({
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
+
+  // Safe translation function with fallback
+  const tr = (key: string): string => {
+    try {
+      const result = t(key as keyof typeof fallbackTranslations.fr)
+      if (result === key) {
+        return fallbackTranslations[language as 'fr' | 'en']?.[key as keyof typeof fallbackTranslations.fr] || key
+      }
+      return result
+    } catch {
+      return fallbackTranslations[language as 'fr' | 'en']?.[key as keyof typeof fallbackTranslations.fr] || key
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -65,13 +98,13 @@ export function NewsletterSignup({
   if (variant === 'footer') {
     return (
       <div className={`${className}`}>
-        <p className="text-xs text-zinc-400 mb-2 font-medium">{t('newsletterTitle')}</p>
+        <p className="text-xs text-zinc-400 mb-2 font-medium">{tr('newsletterTitle')}</p>
         <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <div className="relative flex-1 min-w-0">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
             <Input
               type="email"
-              placeholder={t('emailPlaceholder')}
+              placeholder={tr('emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="pl-9 h-9 text-sm bg-zinc-800/50 border-zinc-700 text-zinc-100 placeholder:text-zinc-500 focus:border-primary focus:ring-primary/20"
@@ -89,7 +122,7 @@ export function NewsletterSignup({
             ) : status === 'success' ? (
               <CheckCircle className="w-4 h-4" />
             ) : (
-              t('subscribeButton')
+              tr('subscribeButton')
             )}
           </Button>
         </form>
@@ -120,7 +153,7 @@ export function NewsletterSignup({
         </AnimatePresence>
         
         <p className="text-[10px] text-zinc-500 mt-2">
-          {t('privacyNote')}
+          {tr('privacyNote')}
         </p>
       </div>
     )
@@ -130,15 +163,15 @@ export function NewsletterSignup({
   if (variant === 'inline') {
     return (
       <div className={`bg-muted/30 rounded-xl p-4 ${className}`}>
-        <h3 className="font-semibold text-foreground mb-1">{t('newsletterTitle')}</h3>
-        <p className="text-sm text-muted-foreground mb-3">{t('newsletterDescription')}</p>
+        <h3 className="font-semibold text-foreground mb-1">{tr('newsletterTitle')}</h3>
+        <p className="text-sm text-muted-foreground mb-3">{tr('newsletterDescription')}</p>
         
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="email"
-              placeholder={t('emailPlaceholder')}
+              placeholder={tr('emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="pl-9"
@@ -159,10 +192,10 @@ export function NewsletterSignup({
             ) : status === 'success' ? (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
-                {t('subscribeSuccess')}
+                {tr('subscribeSuccess')}
               </>
             ) : (
-              t('subscribeButton')
+              tr('subscribeButton')
             )}
           </Button>
         </form>
@@ -197,7 +230,7 @@ export function NewsletterSignup({
         </AnimatePresence>
         
         <p className="text-xs text-muted-foreground mt-3">
-          {t('privacyNote')}
+          {tr('privacyNote')}
         </p>
       </div>
     )
@@ -206,14 +239,14 @@ export function NewsletterSignup({
   // Modal variant - compact with focus
   return (
     <div className={`${className}`}>
-      <p className="text-sm text-muted-foreground mb-3">{t('newsletterDescription')}</p>
+      <p className="text-sm text-muted-foreground mb-3">{tr('newsletterDescription')}</p>
       
       <form onSubmit={handleSubmit} className="flex gap-2">
         <div className="relative flex-1">
           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="email"
-            placeholder={t('emailPlaceholder')}
+            placeholder={tr('emailPlaceholder')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="pl-9"
@@ -230,7 +263,7 @@ export function NewsletterSignup({
           ) : status === 'success' ? (
             <CheckCircle className="w-4 h-4" />
           ) : (
-            t('subscribeButton')
+            tr('subscribeButton')
           )}
         </Button>
       </form>
