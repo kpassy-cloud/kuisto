@@ -632,10 +632,28 @@ export default function Home() {
                 <p className="text-xs text-muted-foreground">{t('appTagline')}</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-1">
               <LanguageSwitcher />
-              
+
+              {/* DEBUG BUTTON - Always visible */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  const res = await fetch('/api/auth/force-refresh')
+                  const data = await res.json()
+                  console.log('Admin status:', data)
+                  alert(`Authentifié: ${data.authenticated}\nSession Role: ${data.sessionRole || 'N/A'}\nDB Role: ${data.databaseRole || 'N/A'}\nIs Admin in DB: ${data.isAdminInDatabase}`)
+                  if (data.isAdminInDatabase) {
+                    setIsAdmin(true)
+                  }
+                }}
+                className="text-xs border-amber-500 text-amber-600"
+              >
+                🔧 Debug Admin
+              </Button>
+
               {isAuthenticated && (
                 <>
                   <Button
@@ -647,7 +665,7 @@ export default function Home() {
                     <ShoppingCart className="w-4 h-4 mr-1" />
                     <span className="hidden sm:inline">{t('shopping')}</span>
                   </Button>
-                  
+
                   <Button
                     variant="ghost"
                     size="sm"
@@ -657,7 +675,7 @@ export default function Home() {
                     <Heart className={`w-4 h-4 mr-1 ${showFavorites ? 'fill-coral text-coral' : ''}`} />
                     <span className="hidden sm:inline">{t('favorites')}</span>
                   </Button>
-                  
+
                   <Button
                     variant="ghost"
                     size="sm"
@@ -666,25 +684,6 @@ export default function Home() {
                   >
                     <Calendar className="w-4 h-4 mr-1" />
                     <span className="hidden sm:inline">{language === 'fr' ? 'Planner' : 'Planner'}</span>
-                  </Button>
-                  
-                  {/* Debug button - shows admin status */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={async () => {
-                      const res = await fetch('/api/auth/force-refresh')
-                      const data = await res.json()
-                      console.log('Admin status:', data)
-                      alert(`Session: ${data.sessionRole || 'N/A'}\nDB: ${data.databaseRole || 'N/A'}\nIs Admin: ${data.isAdminInDatabase}`)
-                      if (data.isAdminInDatabase) {
-                        setIsAdmin(true)
-                        alert('Admin activé! Rafraîchissez la page.')
-                      }
-                    }}
-                    className="text-muted-foreground hover:text-foreground text-xs"
-                  >
-                    🔧 Debug
                   </Button>
 
                   {isAdmin && (
