@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configuration Git - Kuisto</title>
+    <title>Configuration GitHub - Kuisto</title>
     <style>
         * {
             margin: 0;
@@ -11,8 +11,8 @@
             box-sizing: border-box;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #2d5a3d 0%, #1a3a25 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -21,84 +21,53 @@
         }
         .container {
             background: white;
-            border-radius: 16px;
-            padding: 40px;
-            max-width: 500px;
-            width: 100%;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .header h1 {
-            color: #1a1a2e;
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-        .header p {
-            color: #666;
-            font-size: 14px;
-        }
-        .security-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: #dcfce7;
-            color: #166534;
-            padding: 6px 12px;
             border-radius: 20px;
-            font-size: 12px;
-            margin-top: 12px;
+            padding: 40px;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #2d5a3d;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
         }
         .form-group {
             margin-bottom: 20px;
         }
-        .form-group label {
+        label {
             display: block;
             margin-bottom: 8px;
-            font-weight: 600;
             color: #333;
+            font-weight: 500;
         }
-        .input-wrapper {
-            position: relative;
-        }
-        .input-wrapper input {
+        input {
             width: 100%;
-            padding: 14px 50px 14px 14px;
-            border: 2px solid #e5e7eb;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
             border-radius: 10px;
             font-size: 16px;
             font-family: monospace;
-            transition: border-color 0.2s;
+            letter-spacing: 2px;
+            transition: border-color 0.3s;
         }
-        .input-wrapper input:focus {
+        input:focus {
             outline: none;
-            border-color: #3b82f6;
+            border-color: #2d5a3d;
         }
-        .toggle-visibility {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #666;
-            padding: 4px;
+        input::placeholder {
+            letter-spacing: 0;
+            font-family: sans-serif;
         }
-        .toggle-visibility:hover {
-            color: #333;
-        }
-        .hint {
-            font-size: 12px;
-            color: #888;
-            margin-top: 8px;
-        }
-        .button {
+        button {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            padding: 15px;
+            background: linear-gradient(135deg, #2d5a3d, #3d7a4d);
             color: white;
             border: none;
             border-radius: 10px;
@@ -107,142 +76,127 @@
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        .button:hover {
+        button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px -10px rgba(59, 130, 246, 0.5);
+            box-shadow: 0 5px 20px rgba(45, 90, 61, 0.3);
         }
-        .button:disabled {
-            background: #9ca3af;
+        button:disabled {
+            background: #ccc;
             cursor: not-allowed;
             transform: none;
         }
-        .success {
-            display: none;
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
             text-align: center;
-            padding: 20px;
+            display: none;
         }
-        .success-icon {
-            width: 60px;
-            height: 60px;
-            background: #dcfce7;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 16px;
-            color: #22c55e;
-            font-size: 30px;
+        .status.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
         }
-        .success h2 {
-            color: #166534;
-            margin-bottom: 8px;
+        .status.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
         }
-        .success p {
+        .info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
             color: #666;
-            font-size: 14px;
+        }
+        .info code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="form-section">
-            <div class="header">
-                <h1>🔐 Configuration Git</h1>
-                <p>Connectez votre dépôt GitHub de manière sécurisée</p>
-                <div class="security-badge">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                    </svg>
-                    Token chiffré et non visible dans le chat
-                </div>
-            </div>
-            
-            <form id="token-form">
-                <div class="form-group">
-                    <label for="token">GitHub Personal Access Token</label>
-                    <div class="input-wrapper">
-                        <input 
-                            type="password" 
-                            id="token" 
-                            name="token" 
-                            placeholder="github_pat_xxxxxxxxxxxxxxxxxxxx"
-                            autocomplete="off"
-                            required
-                        >
-                        <button type="button" class="toggle-visibility" onclick="toggleVisibility()">
-                            <svg id="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <p class="hint">Le token sera stocké de manière sécurisée et ne sera jamais affiché en clair.</p>
-                </div>
-                
-                <button type="submit" class="button" id="submit-btn">
-                    Sécuriser et Configurer
-                </button>
-            </form>
+        <h1>🔐 Configuration GitHub</h1>
+        <p class="subtitle">Connexion sécurisée pour synchroniser Kuisto</p>
+        
+        <div class="info">
+            <strong>Comment obtenir un token :</strong><br>
+            1. Allez sur <code>github.com/settings/tokens</code><br>
+            2. Cliquez "Generate new token (classic)"<br>
+            3. Sélectionnez "repo" permissions<br>
+            4. Copiez le token généré
         </div>
         
-        <div class="success" id="success-section">
-            <div class="success-icon">✓</div>
-            <h2>Configuration réussie !</h2>
-            <p>Le token a été sécurisé. Vous pouvez fermer cette page.</p>
-        </div>
+        <form id="tokenForm">
+            <div class="form-group">
+                <label for="token">GitHub Personal Access Token</label>
+                <input 
+                    type="password" 
+                    id="token" 
+                    name="token" 
+                    placeholder="github_pat_xxxxxxxxxxxxxxxxxxxx"
+                    autocomplete="off"
+                    required
+                >
+            </div>
+            <button type="submit" id="submitBtn">
+                🔒 Sécuriser et connecter
+            </button>
+        </form>
+        
+        <div id="status" class="status"></div>
     </div>
 
     <script>
-        function toggleVisibility() {
-            const input = document.getElementById('token');
-            const icon = document.getElementById('eye-icon');
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
-            } else {
-                input.type = 'password';
-                icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-            }
-        }
-
-        document.getElementById('token-form').addEventListener('submit', async function(e) {
+        document.getElementById('tokenForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const token = document.getElementById('token').value;
-            const submitBtn = document.getElementById('submit-btn');
+            const submitBtn = document.getElementById('submitBtn');
+            const status = document.getElementById('status');
             
-            if (!token || !token.startsWith('github_pat_')) {
-                alert('Veuillez entrer un token GitHub valide (commençant par github_pat_)');
+            if (!token.startsWith('github_pat_')) {
+                status.className = 'status error';
+                status.textContent = 'Le token doit commencer par github_pat_';
                 return;
             }
             
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Configuration en cours...';
+            submitBtn.textContent = '⏳ Connexion...';
             
             try {
                 const response = await fetch('/api/secure-token', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ token }),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
                 });
                 
+                const data = await response.json();
+                
                 if (response.ok) {
-                    document.getElementById('form-section').style.display = 'none';
-                    document.getElementById('success-section').style.display = 'block';
-                    
-                    // Clear the token from memory
+                    status.className = 'status success';
+                    status.textContent = '✅ Token sécurisé ! Vous pouvez fermer cette page.';
                     document.getElementById('token').value = '';
+                    
+                    // Notify parent if in iframe
+                    if (window.parent !== window) {
+                        window.parent.postMessage({ type: 'TOKEN_SET' }, '*');
+                    }
                 } else {
-                    throw new Error('Erreur lors de la configuration');
+                    status.className = 'status error';
+                    status.textContent = data.error || 'Erreur lors de la sauvegarde';
                 }
-            } catch (error) {
-                alert('Erreur: ' + error.message);
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Sécuriser et Configurer';
+            } catch (err) {
+                status.className = 'status error';
+                status.textContent = 'Erreur de connexion';
             }
+            
+            submitBtn.disabled = false;
+            submitBtn.textContent = '🔒 Sécuriser et connecter';
         });
     </script>
 </body>

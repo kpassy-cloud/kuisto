@@ -62,7 +62,6 @@ export function NewsFeedHero({ onSignUpClick, isAuthenticated, onGoToCooking }: 
   const [visibleItems, setVisibleItems] = useState(5)
   const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null)
   const [showExploreModal, setShowExploreModal] = useState(false)
-  const [dismissedSignupCTA, setDismissedSignupCTA] = useState(false)
 
   const categories = [
     { id: null, label: language === 'fr' ? 'Tous' : 'All', icon: Sparkles },
@@ -501,25 +500,17 @@ export function NewsFeedHero({ onSignUpClick, isAuthenticated, onGoToCooking }: 
         )}
 
         {/* Sign Up CTA (shown for non-authenticated users after scrolling) */}
-        {!isAuthenticated && visibleItems >= 5 && !dismissedSignupCTA && (
+        {!isAuthenticated && visibleItems >= 5 && (
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             className="fixed bottom-20 left-4 right-4 md:left-auto md:right-8 md:w-96 bg-card/95 backdrop-blur-lg border shadow-2xl rounded-2xl p-6 z-40"
           >
-            {/* Dismiss button */}
-            <button
-              onClick={() => setDismissedSignupCTA(true)}
-              className="absolute top-3 right-3 p-1.5 rounded-full bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-              aria-label={language === 'fr' ? 'Fermer' : 'Close'}
-            >
-              <X className="w-4 h-4" />
-            </button>
             <div className="flex items-start gap-4">
               <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg">
                 <ChefHat className="w-6 h-6" />
               </div>
-              <div className="flex-1 pr-6">
+              <div className="flex-1">
                 <h3 className="font-serif font-semibold text-foreground mb-1">
                   {language === 'fr' ? 'Continuez à explorer!' : 'Keep exploring!'}
                 </h3>

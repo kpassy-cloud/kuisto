@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, readFile, mkdir } from 'fs/promises'
+import { writeFile, readFile, mkdir, unlink } from 'fs/promises'
 import { join } from 'path'
 
 // This endpoint receives and securely stores the GitHub token
@@ -74,7 +74,6 @@ export async function GET() {
 export async function DELETE() {
   try {
     const tokenPath = join(process.cwd(), '.secure', 'github-token')
-    const { unlink } = await import('fs/promises')
     await unlink(tokenPath)
     return NextResponse.json({ success: true, message: 'Token supprimé' })
   } catch {

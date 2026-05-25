@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-const CACHE_NAME = 'kuisto-v1'
+const CACHE_NAME = 'akanut-v1'
 const OFFLINE_URL = '/offline.html'
 
 // Assets to cache on install

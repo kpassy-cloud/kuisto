@@ -1,31 +1,8 @@
 import Stripe from 'stripe'
 
-// Lazy initialization of Stripe to avoid build-time errors
-let stripeInstance: Stripe | null = null
-
-const getStripe = (): Stripe => {
-  if (!stripeInstance) {
-    const secretKey = process.env.STRIPE_SECRET_KEY
-    if (!secretKey) {
-      throw new Error('STRIPE_SECRET_KEY is not configured')
-    }
-    stripeInstance = new Stripe(secretKey, {
-      apiVersion: '2025-04-30.basil',
-    })
-  }
-  return stripeInstance
-}
-
-// Export a proxy that lazy-loads Stripe
-export const stripe = new Proxy({} as Stripe, {
-  get(target, prop) {
-    const instance = getStripe()
-    const value = instance[prop as keyof Stripe]
-    if (typeof value === 'function') {
-      return value.bind(instance)
-    }
-    return value
-  }
+// Initialize Stripe with secret key
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+  apiVersion: '2025-04-30.basil',
 })
 
 // Stripe Price IDs for each plan (CAD pricing)

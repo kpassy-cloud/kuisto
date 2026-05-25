@@ -81,30 +81,25 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       return
     }
 
-    // Normalize email before login
-    const normalizedEmail = email.toLowerCase().trim()
+    const result = await login(email, password)
     
-    // Retry logic for DB replication delay
-    let loginSuccess = false
-    let attempts = 0
-    const maxAttempts = 5
-    
-    while (!loginSuccess && attempts < maxAttempts) {
-      const result = await login(normalizedEmail, password)
-      
-      if (!result?.error) {
-        loginSuccess = true
-      } else {
-        attempts++
-        if (attempts >= maxAttempts) {
-          setError(language === 'fr' ? 'Email ou mot de passe incorrect' : 'Incorrect email or password')
-        } else {
-          await new Promise(resolve => setTimeout(resolve, 300 * attempts))
-        }
+    if (result?.error) {
+      switch (result.error) {
+        case 'USER_NOT_FOUND':
+          setError(language === 'fr' ? 'Aucun compte trouvé avec cette adresse email' : 'No account found with this email address')
+          break
+        case 'INVALID_PASSWORD':
+          setError(language === 'fr' ? 'Mot de passe incorrect' : 'Incorrect password')
+          break
+        case 'PASSWORD_NOT_SET':
+          setError(language === 'fr' ? 'Ce compte nécessite une réinitialisation du mot de passe' : 'This account requires password reset')
+          // Auto-switch to forgot password
+          setTimeout(() => setView('forgot-password'), 1500)
+          break
+        default:
+          setError(language === 'fr' ? 'Erreur de connexion' : 'Login error')
       }
-    }
-    
-    if (loginSuccess) {
+    } else {
       toast({
         title: language === 'fr' ? 'Connexion réussie' : 'Login successful',
         description: language === 'fr' ? 'Bienvenue sur Kuisto !' : 'Welcome to Kuisto!'
@@ -113,7 +108,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       resetForm()
     }
   }
-   const handleRegister = async (e: React.FormEvent) => {
+
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
@@ -135,12 +131,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setIsRegistering(true)
 
     try {
-      const normalizedEmail = email.toLowerCase().trim()
-      
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: normalizedEmail, password, name: name || undefined })
+        body: JSON.stringify({ email, password, name: name || undefined })
       })
 
       const data = await response.json()
@@ -162,31 +156,11 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         return
       }
 
-      await new Promise(resolve => setTimeout(resolve, 800))
+      // Auto login after registration
+      const result = await login(email, password)
       
-      let loginSuccess = false
-      let loginAttempts = 0
-      const maxAttempts = 5
-      
-      while (!loginSuccess && loginAttempts < maxAttempts) {
-        const result = await login(normalizedEmail, password)
-        
-        if (!result?.error) {
-          loginSuccess = true
-        } else {
-          loginAttempts++
-          if (loginAttempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 400 * loginAttempts))
-          }
-        }
-      }
-      
-      if (!loginSuccess) {
-        setSuccess(language === 'fr' 
-          ? 'Compte créé avec succès ! Veuillez vous connecter.' 
-          : 'Account created successfully! Please sign in.')
-        setActiveTab('login')
-        setError('')
+      if (result?.error) {
+        setError(language === 'fr' ? 'Compte créé mais erreur de connexion automatique' : 'Account created but auto-login failed')
       } else {
         toast({
           title: language === 'fr' ? 'Compte créé !' : 'Account created!',
@@ -201,7 +175,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setIsRegistering(false)
     }
   }
-  
+
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -744,13 +718,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                       <div className="flex items-center gap-2 text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
                         <AlertCircle className="w-4 h-4 shrink-0" />
                         {error}
-                      </div>
-                    )}
-
-                    {success && (
-                      <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
-                        <Check className="w-4 h-4 shrink-0" />
-                        {success}
                       </div>
                     )}
 

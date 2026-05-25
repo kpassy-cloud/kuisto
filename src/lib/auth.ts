@@ -21,7 +21,7 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db),
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
     signIn: '/',
@@ -40,14 +40,16 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
+        // Normalize email
         const email = credentials.email.toLowerCase().trim()
         const password = credentials.password
 
         try {
+          // Find existing user with retry logic for DB replication delay
           let user = null
           let attempts = 0
           const maxAttempts = 5
-          const retryDelay = 300
+          const retryDelay = 300 // ms
 
           while (!user && attempts < maxAttempts) {
             user = await db.user.findUnique({
@@ -63,10 +65,16 @@ export const authOptions: NextAuthOptions = {
             }
           }
 
-          if (!user || !user.password) {
+          if (!user) {
+            // User not found - return null to trigger CredentialsSignin error
             return null
           }
 
+          if (!user.password) {
+            return null
+          }
+
+          // Verify password
           const isValid = await bcrypt.compare(password, user.password)
           
           if (!isValid) {
@@ -89,7 +97,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id
         token.email = user.email
@@ -97,6 +105,7 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as any).role || 'user'
       }
       
+      // On session update, fetch fresh plan from database
       if (trigger === 'update' && token.id) {
         const subscription = await db.subscription.findUnique({
           where: { userId: token.id as string }
@@ -121,5 +130,5 @@ export const authOptions: NextAuthOptions = {
       console.log(`User signed in: ${user.email}`)
     },
   },
-  debug: false,
+  debug: process.env.NODE_ENV === 'development',
 }

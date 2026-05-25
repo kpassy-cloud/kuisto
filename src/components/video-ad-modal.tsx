@@ -121,7 +121,10 @@ export function VideoAdModal({
       thanks: { fr: 'Merci d\'avoir regardé !', en: 'Thanks for watching!' },
       featureUnlocked: { fr: 'Fonctionnalité débloquée', en: 'Feature unlocked' },
       close: { fr: 'Fermer', en: 'Close' },
-      sponsoredBy: { fr: 'Sponsorisé par', en: 'Sponsored by' }
+      cookNow: { fr: 'Cuisiner maintenant', en: 'Cook now' },
+      generateRecipe: { fr: 'Générer ma recette', en: 'Generate my recipe' },
+      sponsoredBy: { fr: 'Sponsorisé par', en: 'Sponsored by' },
+      readyToCook: { fr: 'Prêt à cuisiner !', en: 'Ready to cook!' }
     }
     return translations[key]?.[language as 'fr' | 'en'] || key
   }
@@ -291,17 +294,17 @@ export function VideoAdModal({
                           animate={{ scale: 1 }}
                           transition={{ type: 'spring' }}
                         >
-                          ✅
+                          🍳
                         </motion.div>
                       </div>
-                      <h3 className="text-white text-xl font-bold mb-2">{t('thanks')}</h3>
+                      <h3 className="text-white text-xl font-bold mb-2">{t('readyToCook')}</h3>
                       <p className="text-white/70 mb-6">{t('featureUnlocked')}</p>
                       <Button
                         onClick={handleComplete}
-                        className="bg-primary hover:bg-primary/90"
+                        className="bg-primary hover:bg-primary/90 text-lg px-8 py-6"
                       >
-                        {t('close')}
-                        <ChevronRight className="w-4 h-4 ml-1" />
+                        {t('generateRecipe')}
+                        <ChevronRight className="w-5 h-5 ml-2" />
                       </Button>
                     </div>
                   </motion.div>

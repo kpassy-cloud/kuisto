@@ -1,8 +1,14 @@
-# Cuisine Improvisée
+# Kuisto - Sandbox Active
 
-Application de génération de recettes personnalisées basée sur les ingrédients disponibles.
+Last update: $(date)
 
-## Fonctionnalités
-- Sélection d'ingrédients par catégories
-- Génération de recettes adaptées
-- Génération d'images réalistes pour chaque recette
+## Status
+- Server running on port 3000
+- Next.js 16 with Turbopack
+- All features working
+
+## Recent Changes
+1. First recipe is free (no ad required)
+2. "Generate my recipe" button instead of "Close" after ad
+3. Auto-redirect after watching ad
+4. Auto-generation if 3+ ingredients selected

@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 
+// POST /api/auth/register - Register a new user
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { email, password, name } = body
 
-    const normalizedEmail = email?.toLowerCase().trim()
-
-    if (!normalizedEmail || !normalizedEmail.includes('@')) {
+    // Validation
+    if (!email || !email.includes('@')) {
       return NextResponse.json(
         { error: 'EMAIL_INVALID', message: 'Adresse email invalide' },
         { status: 400 }
@@ -23,8 +23,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check if user already exists
     const existingUser = await db.user.findUnique({
-      where: { email: normalizedEmail }
+      where: { email }
     })
 
     if (existingUser) {
@@ -34,30 +35,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    const user = await db.$transaction(async (tx) => {
-      const newUser = await tx.user.create({
-        data: {
-          email: normalizedEmail,
-          password: hashedPassword,
-          name: name || normalizedEmail.split('@')[0],
-        }
-      })
+    // Create user with subscription
+    const user = await db.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name: name || email.split('@')[0],
+      }
+    })
 
-      await tx.userPreferences.create({
-        data: { userId: newUser.id }
-      })
+    // Create default preferences
+    await db.userPreferences.create({
+      data: { userId: user.id }
+    })
 
-      await tx.subscription.create({
-        data: { 
-          userId: newUser.id,
-          plan: 'free',
-          status: 'active'
-        }
-      })
-
-      return newUser
+    // Create free subscription
+    await db.subscription.create({
+      data: { 
+        userId: user.id,
+        plan: 'free',
+        status: 'active'
+      }
     })
 
     return NextResponse.json({
