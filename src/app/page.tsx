@@ -114,7 +114,7 @@ export default function Home() {
   const [showVideoAd, setShowVideoAd] = useState(false)
   const [pendingFeatureUnlock, setPendingFeatureUnlock] = useState<string | null>(null)
   const [pendingRecipeGeneration, setPendingRecipeGeneration] = useState(false) // Flag to trigger recipe generation after ad
-  const [justUnlockedGeneration, setJustUnlockedGeneration] = useState(false) // Flag to skip auth check after ad
+  const [adWatchedForGeneration, setAdWatchedForGeneration] = useState(false) // One-time unlock after watching ad
 
   // Initialize
   useEffect(() => {
@@ -316,13 +316,13 @@ export default function Home() {
         setRecipeGenerationCount(newCount)
         localStorage.setItem('kuisto_recipe_count', newCount.toString())
         // Continue to generation
-      } else if (!unlockedFeatures.has('recipe_generation') && !justUnlockedGeneration) {
-        // Show premium lock for subsequent generations
+      } else if (!adWatchedForGeneration) {
+        // Show premium lock - user needs to watch an ad for EACH generation after the first
         showPremiumLockModal(
           language === 'fr' ? 'Génération de recettes' : 'Recipe generation',
           language === 'fr' 
-            ? 'Regardez une publicité pour générer des recettes sans créer de compte'
-            : 'Watch an ad to generate recipes without creating an account',
+            ? 'Regardez une publicité pour générer une recette'
+            : 'Watch an ad to generate a recipe',
           'recipe_generation'
         )
         setPendingRecipeGeneration(true)
@@ -330,9 +330,9 @@ export default function Home() {
       }
     }
     
-    // Reset the just unlocked flag
-    if (justUnlockedGeneration) {
-      setJustUnlockedGeneration(false)
+    // Reset the ad watched flag after using it (one-time use)
+    if (adWatchedForGeneration) {
+      setAdWatchedForGeneration(false)
     }
 
     if (selectedIngredients.length < 3) {
@@ -531,29 +531,16 @@ export default function Home() {
 
   // Freemium: Handle ad completion
   const handleAdComplete = () => {
-    if (pendingFeatureUnlock) {
-      // Unlock for 24 hours
-      const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000)
-      setUnlockedFeatures(prev => {
-        const newSet = new Set(prev)
-        newSet.add(pendingFeatureUnlock)
-        // Save to localStorage
-        const unlockedObj: Record<string, string> = {}
-        newSet.forEach(f => {
-          unlockedObj[f] = expiry.toISOString()
-        })
-        localStorage.setItem('kuisto_unlocked_features', JSON.stringify(unlockedObj))
-        return newSet
-      })
-      
-      toast({
-        title: language === 'fr' ? 'Fonctionnalité débloquée !' : 'Feature unlocked!',
-        description: language === 'fr' 
-          ? 'Vous pouvez maintenant générer des recettes !'
-          : 'You can now generate recipes!'
-      })
-    }
+    // Set the one-time unlock flag for recipe generation
+    setAdWatchedForGeneration(true)
     setPendingFeatureUnlock(null)
+    
+    toast({
+      title: language === 'fr' ? 'Publicité terminée !' : 'Ad completed!',
+      description: language === 'fr' 
+        ? 'Vous pouvez maintenant générer une recette !'
+        : 'You can now generate a recipe!'
+    })
     
     // If pending recipe generation, show recipe section and auto-generate if ingredients selected
     if (pendingRecipeGeneration) {
@@ -567,8 +554,6 @@ export default function Home() {
         }
         // Auto-generate if enough ingredients are selected
         if (selectedIngredients.length >= 3) {
-          // Set flag to skip auth check since we just unlocked
-          setJustUnlockedGeneration(true)
           // Small delay to let UI update first
           setTimeout(() => {
             generateRecipes(true)
