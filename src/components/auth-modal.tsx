@@ -105,8 +105,10 @@ export function AuthModal({ isOpen, onClose, forceSignup = false }: AuthModalPro
         title: language === 'fr' ? 'Connexion réussie' : 'Login successful',
         description: language === 'fr' ? 'Bienvenue sur Kuisto !' : 'Welcome to Kuisto!'
       })
-      onClose()
       resetForm()
+      onClose()
+      // Force page reload to refresh session
+      setTimeout(() => window.location.reload(), 500)
     }
   }
 
@@ -167,8 +169,10 @@ export function AuthModal({ isOpen, onClose, forceSignup = false }: AuthModalPro
           title: language === 'fr' ? 'Compte créé !' : 'Account created!',
           description: language === 'fr' ? 'Bienvenue sur Kuisto !' : 'Welcome to Kuisto!'
         })
-        onClose()
         resetForm()
+        onClose()
+        // Force page reload to refresh session
+        setTimeout(() => window.location.reload(), 500)
       }
     } catch (err) {
       setError(language === 'fr' ? 'Erreur de connexion au serveur' : 'Server connection error')
