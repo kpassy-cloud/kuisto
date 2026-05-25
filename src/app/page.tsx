@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Moon, Sun, Heart, Settings, ShoppingCart, Leaf, ChefHat, Calendar, Crown, Shield, ArrowRight, UtensilsCrossed, User } from 'lucide-react'
+import { Moon, Sun, Heart, Settings, ShoppingCart, Leaf, ChefHat, Calendar, Crown, Shield, ArrowRight, UtensilsCrossed, User, Phone, Mail, MapPin, Facebook, Twitter, Instagram, Youtube } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { useTheme } from 'next-themes'
 import { ShoppingListPanel } from '@/components/shopping-list-panel'
@@ -1082,50 +1082,170 @@ export default function Home() {
         duration={30}
       />
 
-      {/* Footer - Always visible at bottom */}
-      <footer className="mt-auto border-t bg-card/95 backdrop-blur-sm py-6">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            {/* Logo & Brand */}
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary to-terracotta text-primary-foreground">
-                <ChefHat className="w-4 h-4" />
+      {/* Footer - Professional dark footer */}
+      <footer className="mt-auto bg-zinc-900 text-zinc-100">
+        {/* Main Footer Content */}
+        <div className="container mx-auto px-4 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Brand Column */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-terracotta text-primary-foreground">
+                  <ChefHat className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-serif text-xl font-bold text-white">Kuisto</h3>
+                  <p className="text-xs text-zinc-400">{t('appTagline')}</p>
+                </div>
               </div>
-              <div>
-                <span className="font-serif font-semibold text-foreground">Kuisto</span>
-                <p className="text-xs text-muted-foreground">{t('appTagline')}</p>
+              <p className="text-sm text-zinc-400 leading-relaxed">
+                {language === 'fr' 
+                  ? 'Générez des recettes personnalisées basées sur vos ingrédients disponibles. Cuisinez sainement et réduisez le gaspillage alimentaire.'
+                  : 'Generate personalized recipes based on your available ingredients. Cook healthy and reduce food waste.'}
+              </p>
+              {/* Social Links */}
+              <div className="flex items-center gap-3 pt-2">
+                <a href="#" className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors">
+                  <Facebook className="w-4 h-4 text-zinc-400 hover:text-white" />
+                </a>
+                <a href="#" className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors">
+                  <Twitter className="w-4 h-4 text-zinc-400 hover:text-white" />
+                </a>
+                <a href="#" className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors">
+                  <Instagram className="w-4 h-4 text-zinc-400 hover:text-white" />
+                </a>
+                <a href="#" className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors">
+                  <Youtube className="w-4 h-4 text-zinc-400 hover:text-white" />
+                </a>
               </div>
             </div>
-            
-            {/* Links */}
-            <div className="flex items-center gap-6 text-sm">
-              <button 
-                onClick={() => setShowAuthModal(true)}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {language === 'fr' ? 'Connexion' : 'Sign in'}
-              </button>
-              <button 
-                onClick={() => setShowSubscription(true)}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {language === 'fr' ? 'Premium' : 'Premium'}
-              </button>
-              <button className="text-muted-foreground hover:text-foreground transition-colors">
-                {language === 'fr' ? 'À propos' : 'About'}
-              </button>
+
+            {/* Quick Links */}
+            <div>
+              <h4 className="font-semibold text-white mb-4">
+                {language === 'fr' ? 'Liens rapides' : 'Quick Links'}
+              </h4>
+              <ul className="space-y-3">
+                <li>
+                  <button onClick={() => setShowAuthModal(true)} className="text-zinc-400 hover:text-white transition-colors text-sm">
+                    {language === 'fr' ? 'Créer un compte' : 'Create account'}
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setShowSubscription(true)} className="text-zinc-400 hover:text-white transition-colors text-sm">
+                    {language === 'fr' ? 'Devenir Premium' : 'Go Premium'}
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setShowRecipeSection(true)} className="text-zinc-400 hover:text-white transition-colors text-sm">
+                    {language === 'fr' ? 'Générer des recettes' : 'Generate recipes'}
+                  </button>
+                </li>
+                <li>
+                  <button className="text-zinc-400 hover:text-white transition-colors text-sm">
+                    {language === 'fr' ? 'Fonctionnalités' : 'Features'}
+                  </button>
+                </li>
+                <li>
+                  <button className="text-zinc-400 hover:text-white transition-colors text-sm">
+                    {language === 'fr' ? 'FAQ' : 'FAQ'}
+                  </button>
+                </li>
+              </ul>
             </div>
-            
-            {/* Slogan */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Leaf className="w-4 h-4 text-success" />
-              <span>{language === 'fr' ? 'Des recettes saines avec vos ingrédients' : 'Healthy recipes with your ingredients'}</span>
+
+            {/* Legal Links */}
+            <div>
+              <h4 className="font-semibold text-white mb-4">
+                {language === 'fr' ? 'Mentions légales' : 'Legal'}
+              </h4>
+              <ul className="space-y-3">
+                <li>
+                  <a href="#" className="text-zinc-400 hover:text-white transition-colors text-sm">
+                    {language === 'fr' ? 'Conditions d\'utilisation' : 'Terms of Service'}
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-zinc-400 hover:text-white transition-colors text-sm">
+                    {language === 'fr' ? 'Politique de confidentialité' : 'Privacy Policy'}
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-zinc-400 hover:text-white transition-colors text-sm">
+                    {language === 'fr' ? 'Politique de cookies' : 'Cookie Policy'}
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-zinc-400 hover:text-white transition-colors text-sm">
+                    {language === 'fr' ? 'Mentions légales' : 'Legal Notice'}
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-zinc-400 hover:text-white transition-colors text-sm">
+                    {language === 'fr' ? 'CGV' : 'Terms & Conditions'}
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h4 className="font-semibold text-white mb-4">
+                {language === 'fr' ? 'Contact' : 'Contact'}
+              </h4>
+              <ul className="space-y-3">
+                <li className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-zinc-800">
+                    <Phone className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500">{language === 'fr' ? 'Téléphone' : 'Phone'}</p>
+                    <p className="text-sm text-zinc-300">+1 (514) 123-4567</p>
+                  </div>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-zinc-800">
+                    <Mail className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500">{language === 'fr' ? 'Email' : 'Email'}</p>
+                    <p className="text-sm text-zinc-300">contact@kuisto.ca</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-zinc-800 mt-0.5">
+                    <MapPin className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500">{language === 'fr' ? 'Adresse' : 'Address'}</p>
+                    <p className="text-sm text-zinc-300">
+                      {language === 'fr' 
+                        ? 'Montréal, Québec, Canada'
+                        : 'Montreal, Quebec, Canada'}
+                    </p>
+                  </div>
+                </li>
+              </ul>
             </div>
           </div>
-          
-          {/* Copyright */}
-          <div className="mt-4 pt-4 border-t border-border/50 text-center text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Kuisto. {language === 'fr' ? 'Tous droits réservés.' : 'All rights reserved.'}
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="border-t border-zinc-800">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-sm text-zinc-500">
+                <Leaf className="w-4 h-4 text-success" />
+                <span>{language === 'fr' ? 'Cuisinez sainement, vivez mieux' : 'Cook healthy, live better'}</span>
+              </div>
+              <p className="text-xs text-zinc-500">
+                © {new Date().getFullYear()} Kuisto. {language === 'fr' ? 'Tous droits réservés.' : 'All rights reserved.'}
+              </p>
+              <div className="flex items-center gap-4">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/100px-Visa_Inc._logo.svg.png" alt="Visa" className="h-5 opacity-50 hover:opacity-100 transition-opacity" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/100px-Mastercard-logo.svg.png" alt="Mastercard" className="h-5 opacity-50 hover:opacity-100 transition-opacity" />
+              </div>
+            </div>
           </div>
         </div>
       </footer>
