@@ -1046,9 +1046,9 @@ export default function Home() {
         duration={30}
       />
 
-      {/* Footer */}
-      <footer className="mt-auto border-t bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-6">
+      {/* Footer - Always visible at bottom */}
+      <footer className="sticky bottom-0 mt-auto border-t bg-card/95 backdrop-blur-sm py-4">
+        <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
             <div className="flex items-center gap-3">
               <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary to-terracotta text-primary-foreground">
