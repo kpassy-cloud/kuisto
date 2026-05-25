@@ -864,6 +864,18 @@ export default function Home() {
         <ChefMode 
           recipe={chefModeRecipe}
           onClose={() => setChefModeRecipe(null)}
+          onNewRecipe={() => {
+            setChefModeRecipe(null)
+            setRecipes([])
+            setSelectedIngredients([])
+            setShowRecipeSection(true)
+          }}
+          onGoHome={() => {
+            setChefModeRecipe(null)
+            setRecipes([])
+            setSelectedIngredients([])
+            setShowRecipeSection(false)
+          }}
         />
       )}
 

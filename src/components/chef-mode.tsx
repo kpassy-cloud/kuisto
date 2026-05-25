@@ -14,6 +14,8 @@ import {
   EyeOff,
   Coffee,
   AlertCircle,
+  Home,
+  RefreshCcw,
 } from 'lucide-react'
 import { VoiceCommands } from '@/components/voice-commands'
 import { Button } from '@/components/ui/button'
@@ -31,6 +33,8 @@ interface ChefModeProps {
     image?: string | null
   }
   onClose: () => void
+  onNewRecipe?: () => void
+  onGoHome?: () => void
 }
 
 interface DetectedTime {
@@ -67,7 +71,7 @@ function detectTimeInInstruction(instruction: string): DetectedTime | null {
   return null
 }
 
-export default function ChefMode({ recipe, onClose }: ChefModeProps) {
+export default function ChefMode({ recipe, onClose, onNewRecipe, onGoHome }: ChefModeProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [showIngredients, setShowIngredients] = useState(false)
   const [wakeLockEnabled, setWakeLockEnabled] = useState(false)
@@ -619,13 +623,13 @@ export default function ChefMode({ recipe, onClose }: ChefModeProps) {
         </Button>
       </div>
 
-      {/* Final celebration */}
+      {/* Final celebration with action buttons */}
       <AnimatePresence>
         {currentStep === totalSteps - 1 && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="absolute bottom-24 left-1/2 -translate-x-1/2"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute bottom-24 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4"
           >
             <motion.div
               animate={{
@@ -639,6 +643,40 @@ export default function ChefMode({ recipe, onClose }: ChefModeProps) {
               className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full text-lg font-bold shadow-lg shadow-green-500/30"
             >
               🎉 Recette terminée!
+            </motion.div>
+            
+            {/* Action buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="flex gap-3 mt-2"
+            >
+              {onNewRecipe && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onNewRecipe()
+                  }}
+                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-6 py-3 text-lg shadow-lg"
+                >
+                  <RefreshCcw className="w-5 h-5 mr-2" />
+                  Nouvelle recette
+                </Button>
+              )}
+              {onGoHome && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onGoHome()
+                  }}
+                  variant="outline"
+                  className="border-white/30 text-white hover:bg-white/10 px-6 py-3 text-lg"
+                >
+                  <Home className="w-5 h-5 mr-2" />
+                  Accueil
+                </Button>
+              )}
             </motion.div>
           </motion.div>
         )}
