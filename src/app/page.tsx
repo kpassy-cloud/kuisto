@@ -668,6 +668,25 @@ export default function Home() {
                     <span className="hidden sm:inline">{language === 'fr' ? 'Planner' : 'Planner'}</span>
                   </Button>
                   
+                  {/* Debug button - shows admin status */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
+                      const res = await fetch('/api/auth/force-refresh')
+                      const data = await res.json()
+                      console.log('Admin status:', data)
+                      alert(`Session: ${data.sessionRole || 'N/A'}\nDB: ${data.databaseRole || 'N/A'}\nIs Admin: ${data.isAdminInDatabase}`)
+                      if (data.isAdminInDatabase) {
+                        setIsAdmin(true)
+                        alert('Admin activé! Rafraîchissez la page.')
+                      }
+                    }}
+                    className="text-muted-foreground hover:text-foreground text-xs"
+                  >
+                    🔧 Debug
+                  </Button>
+
                   {isAdmin && (
                     <Button
                       variant="ghost"
