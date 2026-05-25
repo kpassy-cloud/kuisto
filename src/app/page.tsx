@@ -36,7 +36,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 
 export default function Home() {
   // Auth state
-  const { user, isAuthenticated, isLoading: authLoading, login } = useAuth()
+  const { user, isAuthenticated, isLoading: authLoading, login, plan } = useAuth()
   
   // Core state
   const [selectedIngredients, setSelectedIngredients] = useState<Ingredient[]>([])
@@ -310,43 +310,69 @@ export default function Home() {
     // Debug logging
     console.log('=== generateRecipes called ===')
     console.log('isAuthenticated:', isAuthenticated)
+    console.log('plan:', plan)
     console.log('skipAuthCheck:', skipAuthCheck)
     console.log('adWatchedForGeneration:', adWatchedForGeneration)
     
-    // For non-authenticated users, ALWAYS track the counter
-    if (!isAuthenticated) {
-      // Read DIRECTLY from localStorage to get the most current value
-      // This prevents race conditions with React state updates
-      const storedCount = parseInt(localStorage.getItem('kuisto_recipe_count') || '0', 10)
-      console.log('storedCount from localStorage:', storedCount)
+    // PREMIUM users have unlimited access
+    if (isAuthenticated && plan === 'premium') {
+      console.log('Premium user - unlimited access')
+      // Proceed directly to generation
+    }
+    // AUTHENTICATED FREE users: 3 recipes per session, then premium/ad prompt
+    else if (isAuthenticated && plan === 'free') {
+      const storageKey = 'kuisto_free_user_recipe_count'
+      const storedCount = parseInt(localStorage.getItem(storageKey) || '0', 10)
+      console.log('Free user storedCount:', storedCount)
       
-      // Check if user needs to watch ad (skipAuthCheck bypasses this check after ad watched)
-      // First recipe is free (counter is 0)
-      // After that, need to watch ad for each generation
-      if (!skipAuthCheck && storedCount >= 1 && !adWatchedForGeneration) {
-        console.log('BLOCKING: Showing premium lock modal')
-        // NOT first time and NO ad watched - show premium lock
+      // After 3 recipes, require premium or ad
+      if (!skipAuthCheck && storedCount >= 3 && !adWatchedForGeneration) {
+        console.log('BLOCKING Free user: Showing premium lock modal')
         showPremiumLockModal(
-          language === 'fr' ? 'Génération de recettes' : 'Recipe generation',
+          language === 'fr' ? 'Limite atteinte' : 'Limit reached',
           language === 'fr' 
-            ? 'Regardez une publicité pour générer une recette'
-            : 'Watch an ad to generate a recipe',
+            ? 'Vous avez utilisé vos 3 recettes gratuites. Passez premium pour un accès illimité ou regardez une publicité.'
+            : 'You have used your 3 free recipes. Upgrade to premium for unlimited access or watch an ad.',
           'recipe_generation'
         )
         setPendingRecipeGeneration(true)
         return
       }
       
-      // ALWAYS increment the generation counter and persist to localStorage
+      // Increment counter
       const newCount = storedCount + 1
-      console.log('Incrementing counter from', storedCount, 'to', newCount)
-      localStorage.setItem('kuisto_recipe_count', newCount.toString())
-      setRecipeGenerationCount(newCount) // Update React state for UI consistency
+      localStorage.setItem(storageKey, newCount.toString())
+      console.log('Free user counter incremented to:', newCount)
       
-      // Reset the ad watched flag after using it (one-time use)
       if (adWatchedForGeneration) {
         setAdWatchedForGeneration(false)
       }
+    }
+    // GUEST users (not authenticated): 1 recipe only, then signup prompt
+    else if (!isAuthenticated) {
+      const storageKey = 'kuisto_guest_recipe_count'
+      const storedCount = parseInt(localStorage.getItem(storageKey) || '0', 10)
+      console.log('Guest storedCount:', storedCount)
+      
+      // After 1 recipe, require signup (NO ad option for guests)
+      if (storedCount >= 1 && !skipAuthCheck) {
+        console.log('BLOCKING Guest: Showing auth modal for signup')
+        // For guests, show auth modal to encourage signup
+        setShowAuthModal(true)
+        toast({
+          title: language === 'fr' ? 'Inscription requise' : 'Signup required',
+          description: language === 'fr' 
+            ? 'Créez un compte gratuit pour continuer à générer des recettes!'
+            : 'Create a free account to continue generating recipes!',
+          variant: 'default'
+        })
+        return
+      }
+      
+      // Increment counter
+      const newCount = storedCount + 1
+      localStorage.setItem(storageKey, newCount.toString())
+      console.log('Guest counter incremented to:', newCount)
     }
 
     if (selectedIngredients.length < 3) {
