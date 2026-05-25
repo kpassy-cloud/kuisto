@@ -13,11 +13,12 @@ import { toast } from '@/hooks/use-toast'
 interface AuthModalProps {
   isOpen: boolean
   onClose: () => void
+  forceSignup?: boolean // If true, modal cannot be closed without signing up
 }
 
 type View = 'login' | 'register' | 'forgot-password' | 'reset-password'
 
-export function AuthModal({ isOpen, onClose }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, forceSignup = false }: AuthModalProps) {
   const { t, language } = useI18n()
   const { login, isLoading } = useAuth()
   
@@ -300,7 +301,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={forceSignup ? undefined : onClose}
       >
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }}
@@ -311,12 +312,14 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         >
           {/* Header */}
           <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 p-6 text-center">
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            {!forceSignup && (
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
             
             <div className="p-3 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg mx-auto mb-4">
               {view === 'forgot-password' || view === 'reset-password' ? (

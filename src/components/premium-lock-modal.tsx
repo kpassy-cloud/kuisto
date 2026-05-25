@@ -14,6 +14,7 @@ interface PremiumLockModalProps {
   featureDescription?: string
   onWatchAd?: () => void
   onUpgrade?: () => void
+  hideAdOption?: boolean // For guests - they must signup, no ad option
 }
 
 export function PremiumLockModal({
@@ -22,7 +23,8 @@ export function PremiumLockModal({
   featureName,
   featureDescription,
   onWatchAd,
-  onUpgrade
+  onUpgrade,
+  hideAdOption = false
 }: PremiumLockModalProps) {
   const { language } = useI18n()
   const [isHoveringAd, setIsHoveringAd] = useState(false)
@@ -107,8 +109,8 @@ export function PremiumLockModal({
                 </p>
               )}
 
-              {/* Watch Ad Option */}
-              {onWatchAd && (
+              {/* Watch Ad Option - Only for authenticated free users, NOT for guests */}
+              {onWatchAd && !hideAdOption && (
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}

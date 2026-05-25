@@ -781,8 +781,11 @@ export default function Home() {
                   <Button
                     variant="outline"
                     onClick={() => {
+                      // Read directly from localStorage for accurate count
+                      const guestCount = parseInt(localStorage.getItem('kuisto_guest_recipe_count') || '0', 10)
+                      
                       // First recipe is free - show recipe section directly
-                      if (recipeGenerationCount === 0) {
+                      if (guestCount === 0) {
                         setShowRecipeSection(true)
                         // Scroll to recipe section
                         setTimeout(() => {
@@ -792,15 +795,14 @@ export default function Home() {
                           }
                         }, 100)
                       } else {
-                        // Show premium lock for subsequent generations
-                        showPremiumLockModal(
-                          language === 'fr' ? 'Génération de recettes' : 'Recipe generation',
-                          language === 'fr' 
-                            ? 'Regardez une publicité pour générer des recettes sans créer de compte'
-                            : 'Watch an ad to generate recipes without creating an account',
-                          'recipe_generation'
-                        )
-                        setPendingRecipeGeneration(true)
+                        // Guest already used free recipe - MUST sign up (no ad option for guests)
+                        setShowAuthModal(true)
+                        toast({
+                          title: language === 'fr' ? 'Inscription requise' : 'Signup required',
+                          description: language === 'fr' 
+                            ? 'Créez un compte gratuit pour continuer à générer des recettes!'
+                            : 'Create a free account to continue generating recipes!',
+                        })
                       }
                     }}
                   >
@@ -930,6 +932,7 @@ export default function Home() {
       <AuthModal 
         isOpen={showAuthModal} 
         onClose={() => setShowAuthModal(false)} 
+        forceSignup={!isAuthenticated} // Can't close without signing up for guests
       />
 
       {/* Signup Invitation Modal */}
@@ -979,6 +982,7 @@ export default function Home() {
         featureDescription={premiumFeature.description}
         onWatchAd={handleWatchAd}
         onUpgrade={handleUpgradeClick}
+        hideAdOption={!isAuthenticated} // Hide ad option for guests - they must signup
       />
 
       {/* Video Ad Modal */}
