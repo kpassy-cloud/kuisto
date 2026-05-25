@@ -116,8 +116,10 @@ export default function Home() {
   const [pendingRecipeGeneration, setPendingRecipeGeneration] = useState(false) // Flag to trigger recipe generation after ad
   const [adWatchedForGeneration, setAdWatchedForGeneration] = useState(false) // One-time unlock after watching ad
 
-  // Calculate remaining recipes for free users
+  // Calculate remaining recipes for free users (client-side only)
   const getRemainingRecipes = useCallback(() => {
+    if (typeof window === 'undefined') return 0 // SSR guard
+    
     if (isAuthenticated && plan === 'premium') {
       return Infinity // Unlimited
     }
@@ -132,10 +134,10 @@ export default function Home() {
     return Math.max(0, 1 - storedCount)
   }, [isAuthenticated, plan])
 
-  // State to track remaining recipes for UI updates
-  const [remainingRecipes, setRemainingRecipes] = useState(getRemainingRecipes())
+  // State to track remaining recipes for UI updates - initialize with 0 for SSR safety
+  const [remainingRecipes, setRemainingRecipes] = useState(0)
 
-  // Update remaining recipes when auth state changes
+  // Update remaining recipes when auth state changes (client-side only)
   useEffect(() => {
     setRemainingRecipes(getRemainingRecipes())
   }, [isAuthenticated, plan, getRemainingRecipes])
