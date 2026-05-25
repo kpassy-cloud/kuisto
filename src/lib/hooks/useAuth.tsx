@@ -27,7 +27,10 @@ export function useAuth() {
     // Force refresh the session by calling update
     // This will trigger the session callback in NextAuth
     try {
-      await update()
+      console.log('[AUTH] Refreshing user session...')
+      const result = await update()
+      console.log('[AUTH] Session refresh result:', result)
+      return result
     } catch (error) {
       console.error('Failed to refresh session:', error)
     }

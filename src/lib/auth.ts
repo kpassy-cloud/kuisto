@@ -99,15 +99,17 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (user) {
+        console.log(`[AUTH] New login - setting role: ${(user as any).role}`)
         token.id = user.id
         token.email = user.email
         token.plan = (user as any).plan || 'free'
         token.role = (user as any).role || 'user'
       }
-      
+
       // On session update, fetch fresh plan and role from database
       if (trigger === 'update' && token.id) {
-        const [subscription, user] = await Promise.all([
+        console.log(`[AUTH] Session update triggered for user: ${token.email}`)
+        const [subscription, dbUser] = await Promise.all([
           db.subscription.findUnique({
             where: { userId: token.id as string }
           }),
@@ -117,9 +119,10 @@ export const authOptions: NextAuthOptions = {
           })
         ])
         token.plan = subscription?.plan || 'free'
-        token.role = user?.role || 'user'
+        token.role = dbUser?.role || 'user'
+        console.log(`[AUTH] Refreshed role from DB: ${dbUser?.role}`)
       }
-      
+
       return token
     },
     async session({ session, token }) {

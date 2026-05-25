@@ -186,11 +186,15 @@ export default function Home() {
       // Use fresh check from database
       const response = await fetch('/api/auth/check-admin')
       const data = await response.json()
+      console.log('[ADMIN CHECK] Response:', data)
 
       if (data.isAdmin) {
+        console.log('[ADMIN CHECK] User is admin, refreshing session...')
         setIsAdmin(true)
         // Refresh the JWT token to include updated role
         await refreshUser()
+      } else {
+        console.log('[ADMIN CHECK] User is NOT admin, role:', data.role)
       }
     } catch (err) {
       console.error('Failed to check admin status:', err)
