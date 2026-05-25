@@ -1083,19 +1083,49 @@ export default function Home() {
       />
 
       {/* Footer - Always visible at bottom */}
-      <footer className="sticky bottom-0 mt-auto border-t bg-card/95 backdrop-blur-sm py-4">
+      <footer className="mt-auto border-t bg-card/95 backdrop-blur-sm py-6">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* Logo & Brand */}
             <div className="flex items-center gap-3">
               <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary to-terracotta text-primary-foreground">
                 <ChefHat className="w-4 h-4" />
               </div>
-              <span className="font-serif font-semibold text-foreground">Kuisto</span>
+              <div>
+                <span className="font-serif font-semibold text-foreground">Kuisto</span>
+                <p className="text-xs text-muted-foreground">{t('appTagline')}</p>
+              </div>
             </div>
+            
+            {/* Links */}
+            <div className="flex items-center gap-6 text-sm">
+              <button 
+                onClick={() => setShowAuthModal(true)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {language === 'fr' ? 'Connexion' : 'Sign in'}
+              </button>
+              <button 
+                onClick={() => setShowSubscription(true)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {language === 'fr' ? 'Premium' : 'Premium'}
+              </button>
+              <button className="text-muted-foreground hover:text-foreground transition-colors">
+                {language === 'fr' ? 'À propos' : 'About'}
+              </button>
+            </div>
+            
+            {/* Slogan */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Leaf className="w-4 h-4 text-success" />
               <span>{language === 'fr' ? 'Des recettes saines avec vos ingrédients' : 'Healthy recipes with your ingredients'}</span>
             </div>
+          </div>
+          
+          {/* Copyright */}
+          <div className="mt-4 pt-4 border-t border-border/50 text-center text-xs text-muted-foreground">
+            © {new Date().getFullYear()} Kuisto. {language === 'fr' ? 'Tous droits réservés.' : 'All rights reserved.'}
           </div>
         </div>
       </footer>
