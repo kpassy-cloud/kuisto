@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Moon, Sun, Heart, Settings, ShoppingCart, Leaf, ChefHat, Calendar, Crown, Shield, ArrowRight, UtensilsCrossed, User } from 'lucide-react'
@@ -137,10 +137,13 @@ export default function Home() {
   // State to track remaining recipes for UI updates - initialize with 0 for SSR safety
   const [remainingRecipes, setRemainingRecipes] = useState(0)
 
+  // Track if admin check was already done to prevent loops
+  const adminCheckDone = useRef(false)
+
   // Update remaining recipes when auth state changes (client-side only)
   useEffect(() => {
     setRemainingRecipes(getRemainingRecipes())
-  }, [isAuthenticated, plan, getRemainingRecipes])
+  }, [isAuthenticated, plan])
 
   // Initialize
   useEffect(() => {
@@ -199,7 +202,8 @@ export default function Home() {
 
   // Load data when authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !adminCheckDone.current) {
+      adminCheckDone.current = true
       loadPreferences()
       loadFavorites()
       loadHistory()
@@ -215,10 +219,8 @@ export default function Home() {
       console.log('[ADMIN CHECK] Response:', data)
 
       if (data.isAdmin) {
-        console.log('[ADMIN CHECK] User is admin, refreshing session...')
+        console.log('[ADMIN CHECK] User is admin')
         setIsAdmin(true)
-        // Refresh the JWT token to include updated role
-        await refreshUser()
       } else {
         console.log('[ADMIN CHECK] User is NOT admin, role:', data.role)
       }
