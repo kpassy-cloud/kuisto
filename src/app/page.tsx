@@ -33,6 +33,7 @@ import { VideoAdModal } from '@/components/video-ad-modal'
 import { NativeAdBanner } from '@/components/native-ad-banner'
 import { useEngagementTracker } from '@/lib/hooks/useEngagementTracker'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { DbInitBanner } from '@/components/db-init-banner'
 
 export default function Home() {
   // Auth state
@@ -649,6 +650,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Database initialization banner for empty databases */}
+      <DbInitBanner />
+      
       {/* Header - Modern & Warm */}
       <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-xl supports-[backdrop-filter]:bg-card/60">
         <div className="container mx-auto px-4 py-3">
