@@ -13,18 +13,18 @@ const getAI = async () => {
   }
 }
 
-// Demo image URLs (placeholder food images) - more variety
+// Demo image URLs (placeholder food images) - cooked dishes only
 const DEMO_IMAGES = [
-  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1024&h=1024&fit=crop', // Salad
-  'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=1024&h=1024&fit=crop', // Pancakes
+  'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=1024&h=1024&fit=crop', // Pasta dish
+  'https://images.unsplash.com/photo-1476224203421-9ac012cb5b22?w=1024&h=1024&fit=crop', // Eggs dish
   'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1024&h=1024&fit=crop', // Pizza
-  'https://images.unsplash.com/photo-1540189549332-26d518a33a60?w=1024&h=1024&fit=crop', // Veggies
-  'https://images.unsplash.com/photo-1476224203421-9ac012cb5b22?w=1024&h=1024&fit=crop', // Eggs
-  'https://images.unsplash.com/photo-1499028344343-cd173ffc68a9?w=1024&h=1024&fit=crop', // Meat
-  'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1024&h=1024&fit=crop', // Bowl
-  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1024&h=1024&fit=crop', // Grilled
-  'https://images.unsplash.com/photo-1432139555190-58524dae6a55?w=1024&h=1024&fit=crop', // Fish
-  'https://images.unsplash.com/photo-1547592180-85f173990554?w=1024&h=1024&fit=crop', // Pasta
+  'https://images.unsplash.com/photo-1499028344343-cd173ffc68a9?w=1024&h=1024&fit=crop', // Meat dish
+  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1024&h=1024&fit=crop', // Grilled dish
+  'https://images.unsplash.com/photo-1432139555190-58524dae6a55?w=1024&h=1024&fit=crop', // Fish dish
+  'https://images.unsplash.com/photo-1547592180-85f173990554?w=1024&h=1024&fit=crop', // Pasta bowl
+  'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1024&h=1024&fit=crop', // Grilled meat
+  'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=1024&h=1024&fit=crop', // Pancakes
+  'https://images.unsplash.com/photo-1540189549332-26d518a33a60?w=1024&h=1024&fit=crop', // Roasted veggies
 ]
 
 // Better hash function for more variety
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
 
       // Generate image prompt - focus on the COOKED dish, not raw ingredients
       const mainIngredients = (ingredients || []).slice(0, 4).join(', ')
-      const imagePrompt = `Professional food photography of a fully cooked and prepared dish: ${recipeName}. This is a READY-TO-EAT plated meal made with ${mainIngredients}. Show the finished dish beautifully presented on a modern ceramic plate, garnished elegantly, on a rustic wooden table. The food should look appetizing, warm, and freshly cooked. Natural lighting, restaurant quality presentation, soft bokeh background, high detail, warm inviting atmosphere. IMPORTANT: Do NOT show raw vegetables with stems, do NOT show whole uncut ingredients - only show the prepared, cooked, plated final dish.`
+      const imagePrompt = `Professional food photography of ${recipeName}. A delicious fully cooked hot meal ready to serve on a white ceramic plate. The dish contains: ${mainIngredients}. The food is prepared, cooked, and beautifully plated. Steam rising from the hot food. Restaurant quality presentation with elegant garnish. Natural warm lighting, shallow depth of field, appetizing appearance. NO raw vegetables, NO uncut ingredients, NO whole produce, NO stems, NO leaves attached to vegetables. Only the finished cooked plated dish.`
 
       const imageResponse = await zai.images.generations.create({
         prompt: imagePrompt,

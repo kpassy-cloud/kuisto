@@ -319,8 +319,8 @@ export default function Home() {
       console.log('Premium user - unlimited access')
       // Proceed directly to generation
     }
-    // AUTHENTICATED FREE users: 3 recipes per session, then premium/ad prompt
-    else if (isAuthenticated && plan === 'free') {
+    // ALL OTHER authenticated users (free or undefined plan): 3 recipes, then premium/ad prompt
+    else if (isAuthenticated) {
       const storageKey = 'kuisto_free_user_recipe_count'
       const storedCount = parseInt(localStorage.getItem(storageKey) || '0', 10)
       console.log('Free user storedCount:', storedCount)
@@ -349,7 +349,7 @@ export default function Home() {
       }
     }
     // GUEST users (not authenticated): 1 recipe only, then signup prompt
-    else if (!isAuthenticated) {
+    else {
       const storageKey = 'kuisto_guest_recipe_count'
       const storedCount = parseInt(localStorage.getItem(storageKey) || '0', 10)
       console.log('Guest storedCount:', storedCount)
