@@ -34,6 +34,7 @@ import { NativeAdBanner } from '@/components/native-ad-banner'
 import { useEngagementTracker } from '@/lib/hooks/useEngagementTracker'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { DbInitBanner } from '@/components/db-init-banner'
+import { LegalModal } from '@/components/legal-modal'
 
 export default function Home() {
   // Auth state
@@ -62,6 +63,7 @@ export default function Home() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [showRecipeSection, setShowRecipeSection] = useState(false)
   const [showCTA, setShowCTA] = useState(true) // CTA banner visibility
+  const [legalModal, setLegalModal] = useState<{ isOpen: boolean; type: 'terms' | 'privacy' | 'cookies' | 'legal' | 'cgv' }>({ isOpen: false, type: 'terms' })
   
   // Engagement tracking for signup prompt
   const [showSignupPrompt, setShowSignupPrompt] = useState(false)
@@ -1100,6 +1102,14 @@ export default function Home() {
         duration={30}
       />
 
+      {/* Legal Modal */}
+      <LegalModal
+        isOpen={legalModal.isOpen}
+        onClose={() => setLegalModal({ ...legalModal, isOpen: false })}
+        type={legalModal.type}
+        language={language}
+      />
+
       {/* Footer - Professional dark footer */}
       <footer className="mt-auto bg-zinc-900 text-zinc-100">
         {/* Main Footer Content */}
@@ -1179,29 +1189,44 @@ export default function Home() {
               </h4>
               <ul className="space-y-3">
                 <li>
-                  <a href="#" className="text-zinc-400 hover:text-white transition-colors text-sm">
+                  <button 
+                    onClick={() => setLegalModal({ isOpen: true, type: 'terms' })}
+                    className="text-zinc-400 hover:text-white transition-colors text-sm"
+                  >
                     {language === 'fr' ? 'Conditions d\'utilisation' : 'Terms of Service'}
-                  </a>
+                  </button>
                 </li>
                 <li>
-                  <a href="#" className="text-zinc-400 hover:text-white transition-colors text-sm">
+                  <button 
+                    onClick={() => setLegalModal({ isOpen: true, type: 'privacy' })}
+                    className="text-zinc-400 hover:text-white transition-colors text-sm"
+                  >
                     {language === 'fr' ? 'Politique de confidentialité' : 'Privacy Policy'}
-                  </a>
+                  </button>
                 </li>
                 <li>
-                  <a href="#" className="text-zinc-400 hover:text-white transition-colors text-sm">
+                  <button 
+                    onClick={() => setLegalModal({ isOpen: true, type: 'cookies' })}
+                    className="text-zinc-400 hover:text-white transition-colors text-sm"
+                  >
                     {language === 'fr' ? 'Politique de cookies' : 'Cookie Policy'}
-                  </a>
+                  </button>
                 </li>
                 <li>
-                  <a href="#" className="text-zinc-400 hover:text-white transition-colors text-sm">
+                  <button 
+                    onClick={() => setLegalModal({ isOpen: true, type: 'legal' })}
+                    className="text-zinc-400 hover:text-white transition-colors text-sm"
+                  >
                     {language === 'fr' ? 'Mentions légales' : 'Legal Notice'}
-                  </a>
+                  </button>
                 </li>
                 <li>
-                  <a href="#" className="text-zinc-400 hover:text-white transition-colors text-sm">
+                  <button 
+                    onClick={() => setLegalModal({ isOpen: true, type: 'cgv' })}
+                    className="text-zinc-400 hover:text-white transition-colors text-sm"
+                  >
                     {language === 'fr' ? 'CGV' : 'Terms & Conditions'}
-                  </a>
+                  </button>
                 </li>
               </ul>
             </div>
