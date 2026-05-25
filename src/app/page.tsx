@@ -307,16 +307,24 @@ export default function Home() {
   }
 
   const generateRecipes = async (skipAuthCheck = false) => {
+    // Debug logging
+    console.log('=== generateRecipes called ===')
+    console.log('isAuthenticated:', isAuthenticated)
+    console.log('skipAuthCheck:', skipAuthCheck)
+    console.log('adWatchedForGeneration:', adWatchedForGeneration)
+    
     // For non-authenticated users, ALWAYS track the counter
     if (!isAuthenticated) {
-      // Calculate the NEW counter value FIRST
-      const currentCount = recipeGenerationCount
-      const newCount = currentCount + 1
+      // Read DIRECTLY from localStorage to get the most current value
+      // This prevents race conditions with React state updates
+      const storedCount = parseInt(localStorage.getItem('kuisto_recipe_count') || '0', 10)
+      console.log('storedCount from localStorage:', storedCount)
       
       // Check if user needs to watch ad (skipAuthCheck bypasses this check after ad watched)
-      // First recipe is free (counter goes from 0 to 1)
+      // First recipe is free (counter is 0)
       // After that, need to watch ad for each generation
-      if (!skipAuthCheck && currentCount >= 1 && !adWatchedForGeneration) {
+      if (!skipAuthCheck && storedCount >= 1 && !adWatchedForGeneration) {
+        console.log('BLOCKING: Showing premium lock modal')
         // NOT first time and NO ad watched - show premium lock
         showPremiumLockModal(
           language === 'fr' ? 'Génération de recettes' : 'Recipe generation',
@@ -330,8 +338,10 @@ export default function Home() {
       }
       
       // ALWAYS increment the generation counter and persist to localStorage
-      setRecipeGenerationCount(newCount)
+      const newCount = storedCount + 1
+      console.log('Incrementing counter from', storedCount, 'to', newCount)
       localStorage.setItem('kuisto_recipe_count', newCount.toString())
+      setRecipeGenerationCount(newCount) // Update React state for UI consistency
       
       // Reset the ad watched flag after using it (one-time use)
       if (adWatchedForGeneration) {
