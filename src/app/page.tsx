@@ -116,6 +116,30 @@ export default function Home() {
   const [pendingRecipeGeneration, setPendingRecipeGeneration] = useState(false) // Flag to trigger recipe generation after ad
   const [adWatchedForGeneration, setAdWatchedForGeneration] = useState(false) // One-time unlock after watching ad
 
+  // Calculate remaining recipes for free users
+  const getRemainingRecipes = useCallback(() => {
+    if (isAuthenticated && plan === 'premium') {
+      return Infinity // Unlimited
+    }
+    if (isAuthenticated) {
+      const storageKey = 'kuisto_free_user_recipe_count'
+      const storedCount = parseInt(localStorage.getItem(storageKey) || '0', 10)
+      return Math.max(0, 3 - storedCount)
+    }
+    // Guest users
+    const storageKey = 'kuisto_guest_recipe_count'
+    const storedCount = parseInt(localStorage.getItem(storageKey) || '0', 10)
+    return Math.max(0, 1 - storedCount)
+  }, [isAuthenticated, plan])
+
+  // State to track remaining recipes for UI updates
+  const [remainingRecipes, setRemainingRecipes] = useState(getRemainingRecipes())
+
+  // Update remaining recipes when auth state changes
+  useEffect(() => {
+    setRemainingRecipes(getRemainingRecipes())
+  }, [isAuthenticated, plan, getRemainingRecipes])
+
   // Initialize
   useEffect(() => {
     setMounted(true)
@@ -351,6 +375,7 @@ export default function Home() {
       const newCount = storedCount + 1
       localStorage.setItem(storageKey, newCount.toString())
       console.log('Free user counter incremented to:', newCount)
+      setRemainingRecipes(Math.max(0, 3 - newCount))
       
       if (adWatchedForGeneration) {
         setAdWatchedForGeneration(false)
@@ -381,6 +406,7 @@ export default function Home() {
       const newCount = storedCount + 1
       localStorage.setItem(storageKey, newCount.toString())
       console.log('Guest counter incremented to:', newCount)
+      setRemainingRecipes(Math.max(0, 1 - newCount))
     }
 
     if (selectedIngredients.length < 3) {
@@ -908,6 +934,8 @@ export default function Home() {
                       onAddToShoppingList={addToShoppingList}
                       onViewDetails={handleViewRecipeDetails}
                       isFavorite={isFavorite}
+                      remainingRecipes={remainingRecipes}
+                      isPremium={isAuthenticated && plan === 'premium'}
                     />
                   </div>
                 </div>

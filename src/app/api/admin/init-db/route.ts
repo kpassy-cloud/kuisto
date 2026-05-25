@@ -45,6 +45,18 @@ export async function POST(request: Request) {
       }
     })
 
+    // Create an initial admin key for promoting other users
+    const adminKey = await db.adminKey.create({
+      data: {
+        key: `kuisto-init-key-${Date.now()}`,
+        name: 'Initial Admin Key',
+        description: 'Auto-generated key for initial setup. Use this to promote other users to admin.',
+        maxUses: 10,
+        active: true,
+        createdBy: user.id
+      }
+    })
+
     return NextResponse.json({
       success: true,
       message: 'Admin user created successfully',
@@ -57,6 +69,11 @@ export async function POST(request: Request) {
       login: {
         email: user.email,
         password: password || 'Admin123!'
+      },
+      adminKey: {
+        key: adminKey.key,
+        name: adminKey.name,
+        maxUses: adminKey.maxUses
       }
     })
   } catch (error) {
@@ -73,14 +90,17 @@ export async function GET() {
   try {
     const userCount = await db.user.count()
     const adminCount = await db.user.count({ where: { role: 'admin' } })
+    const adminKeyCount = await db.adminKey.count()
 
     return NextResponse.json({
       userCount,
       adminCount,
+      adminKeyCount,
       needsInit: userCount === 0,
+      hasAdminKeys: adminKeyCount > 0,
       message: userCount === 0
         ? 'Database is empty. Use POST to create initial admin user.'
-        : `Database has ${userCount} users, ${adminCount} admins.`
+        : `Database has ${userCount} users, ${adminCount} admins, ${adminKeyCount} admin keys.`
     })
   } catch (error) {
     console.error('DB status error:', error)

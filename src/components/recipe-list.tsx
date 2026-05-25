@@ -56,6 +56,8 @@ interface RecipeListProps {
   onAddToShoppingList: (recipeName: string, ingredients: string[]) => void
   onViewDetails?: (recipe: Recipe) => void
   isFavorite: (recipeName: string) => boolean
+  remainingRecipes?: number
+  isPremium?: boolean
 }
 
 export function RecipeList({
@@ -70,7 +72,9 @@ export function RecipeList({
   onStartCooking,
   onAddToShoppingList,
   onViewDetails,
-  isFavorite
+  isFavorite,
+  remainingRecipes,
+  isPremium
 }: RecipeListProps) {
   const { t, language } = useI18n()
 
@@ -111,6 +115,12 @@ export function RecipeList({
             ? t('minIngredients', { count: minIngredients }).replace('{count}', String(minIngredients)) + ` (${selectedCount}/${minIngredients})`
             : t('readyToGenerate')
           }
+          {/* Show remaining recipes for free users */}
+          {!isPremium && remainingRecipes !== undefined && selectedCount >= minIngredients && (
+            <span className="ml-2 text-amber-600 dark:text-amber-400">
+              ({remainingRecipes} {language === 'fr' ? 'restantes' : 'remaining'})
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
       
