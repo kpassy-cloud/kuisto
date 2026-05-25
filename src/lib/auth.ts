@@ -105,12 +105,19 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as any).role || 'user'
       }
       
-      // On session update, fetch fresh plan from database
+      // On session update, fetch fresh plan and role from database
       if (trigger === 'update' && token.id) {
-        const subscription = await db.subscription.findUnique({
-          where: { userId: token.id as string }
-        })
+        const [subscription, user] = await Promise.all([
+          db.subscription.findUnique({
+            where: { userId: token.id as string }
+          }),
+          db.user.findUnique({
+            where: { id: token.id as string },
+            select: { role: true }
+          })
+        ])
         token.plan = subscription?.plan || 'free'
+        token.role = user?.role || 'user'
       }
       
       return token

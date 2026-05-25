@@ -36,7 +36,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 
 export default function Home() {
   // Auth state
-  const { user, isAuthenticated, isLoading: authLoading, login, plan } = useAuth()
+  const { user, isAuthenticated, isLoading: authLoading, login, plan, refreshUser } = useAuth()
   
   // Core state
   const [selectedIngredients, setSelectedIngredients] = useState<Ingredient[]>([])
@@ -183,10 +183,14 @@ export default function Home() {
 
   const checkAdminStatus = async () => {
     try {
-      const response = await fetch('/api/auth/session')
+      // Use fresh check from database
+      const response = await fetch('/api/auth/check-admin')
       const data = await response.json()
-      if (data?.user?.role === 'admin') {
+
+      if (data.isAdmin) {
         setIsAdmin(true)
+        // Refresh the JWT token to include updated role
+        await refreshUser()
       }
     } catch (err) {
       console.error('Failed to check admin status:', err)
