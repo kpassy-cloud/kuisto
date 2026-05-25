@@ -8,6 +8,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { email, password, name } = body
 
+    console.log('[REGISTER] Attempting to register:', email)
+
     // Validation
     if (!email || !email.includes('@')) {
       return NextResponse.json(
@@ -23,12 +25,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const normalizedEmail = email.toLowerCase().trim()
+
     // Check if user already exists
     const existingUser = await db.user.findUnique({
-      where: { email }
+      where: { email: normalizedEmail }
     })
 
     if (existingUser) {
+      console.log('[REGISTER] User already exists:', normalizedEmail)
       return NextResponse.json(
         { error: 'EMAIL_EXISTS', message: 'Un compte existe déjà avec cette adresse email' },
         { status: 400 }
@@ -38,28 +43,31 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Create user with subscription
+    // Create user
+    console.log('[REGISTER] Creating user:', normalizedEmail)
     const user = await db.user.create({
       data: {
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
-        name: name || email.split('@')[0],
+        name: name || normalizedEmail.split('@')[0],
       }
     })
 
-    // Create default preferences
-    await db.userPreferences.create({
-      data: { userId: user.id }
-    })
+    console.log('[REGISTER] User created:', user.id)
 
-    // Create free subscription
-    await db.subscription.create({
-      data: { 
-        userId: user.id,
-        plan: 'free',
-        status: 'active'
-      }
-    })
+    // Create default subscription (ignore if fails)
+    try {
+      await db.subscription.create({
+        data: {
+          userId: user.id,
+          plan: 'free',
+          status: 'active'
+        }
+      })
+      console.log('[REGISTER] Subscription created')
+    } catch (subError) {
+      console.log('[REGISTER] Subscription creation failed (non-critical):', subError)
+    }
 
     return NextResponse.json({
       success: true,
@@ -71,9 +79,9 @@ export async function POST(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Registration error:', error)
+    console.error('[REGISTER] Error:', error)
     return NextResponse.json(
-      { error: 'SERVER_ERROR', message: 'Erreur lors de la création du compte' },
+      { error: 'SERVER_ERROR', message: 'Erreur lors de la création du compte', details: String(error) },
       { status: 500 }
     )
   }
