@@ -307,10 +307,16 @@ export default function Home() {
   }
 
   const generateRecipes = async (skipAuthCheck = false) => {
-    // For non-authenticated users, check freemium logic
-    if (!isAuthenticated && !skipAuthCheck) {
-      // First recipe is free (counter is 0)
-      if (recipeGenerationCount >= 1 && !adWatchedForGeneration) {
+    // For non-authenticated users, ALWAYS track the counter
+    if (!isAuthenticated) {
+      // Calculate the NEW counter value FIRST
+      const currentCount = recipeGenerationCount
+      const newCount = currentCount + 1
+      
+      // Check if user needs to watch ad (skipAuthCheck bypasses this check after ad watched)
+      // First recipe is free (counter goes from 0 to 1)
+      // After that, need to watch ad for each generation
+      if (!skipAuthCheck && currentCount >= 1 && !adWatchedForGeneration) {
         // NOT first time and NO ad watched - show premium lock
         showPremiumLockModal(
           language === 'fr' ? 'Génération de recettes' : 'Recipe generation',
@@ -323,15 +329,14 @@ export default function Home() {
         return
       }
       
-      // Increment the generation counter
-      const newCount = recipeGenerationCount + 1
+      // ALWAYS increment the generation counter and persist to localStorage
       setRecipeGenerationCount(newCount)
       localStorage.setItem('kuisto_recipe_count', newCount.toString())
-    }
-    
-    // Reset the ad watched flag after using it (one-time use)
-    if (adWatchedForGeneration) {
-      setAdWatchedForGeneration(false)
+      
+      // Reset the ad watched flag after using it (one-time use)
+      if (adWatchedForGeneration) {
+        setAdWatchedForGeneration(false)
+      }
     }
 
     if (selectedIngredients.length < 3) {

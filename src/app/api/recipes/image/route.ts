@@ -81,9 +81,9 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      // Generate image prompt
-      const mainIngredients = (ingredients || []).slice(0, 5).join(', ')
-      const imagePrompt = `Professional food photography of ${recipeName}, beautifully plated on a rustic wooden table in a warm kitchen setting, natural lighting from a nearby window, fresh ingredients visible including ${mainIngredients}, appetizing presentation, high quality, detailed, restaurant style plating, soft bokeh background, warm color tones`
+      // Generate image prompt - focus on the COOKED dish, not raw ingredients
+      const mainIngredients = (ingredients || []).slice(0, 4).join(', ')
+      const imagePrompt = `Professional food photography of a fully cooked and prepared dish: ${recipeName}. This is a READY-TO-EAT plated meal made with ${mainIngredients}. Show the finished dish beautifully presented on a modern ceramic plate, garnished elegantly, on a rustic wooden table. The food should look appetizing, warm, and freshly cooked. Natural lighting, restaurant quality presentation, soft bokeh background, high detail, warm inviting atmosphere. IMPORTANT: Do NOT show raw vegetables with stems, do NOT show whole uncut ingredients - only show the prepared, cooked, plated final dish.`
 
       const imageResponse = await zai.images.generations.create({
         prompt: imagePrompt,
