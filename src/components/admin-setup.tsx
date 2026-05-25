@@ -16,7 +16,7 @@ interface AdminSetupProps {
 
 export function AdminSetup({ userEmail, isAdmin, onAdminStatusChange }: AdminSetupProps) {
   const { language } = useI18n()
-  const [secretKey, setSecretKey] = useState('kuisto-admin-2024')
+  const [secretKey, setSecretKey] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [adminCount, setAdminCount] = useState(0)
   
@@ -113,9 +113,9 @@ export function AdminSetup({ userEmail, isAdmin, onAdminStatusChange }: AdminSet
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-amber-600 dark:text-amber-400">
-          {language === 'fr' 
-            ? 'Entrez la clé secrète pour obtenir les droits d\'administrateur.'
-            : 'Enter the secret key to get administrator privileges.'}
+          {language === 'fr'
+            ? 'Contactez un administrateur existant pour obtenir une clé d\'activation.'
+            : 'Contact an existing administrator to get an activation key.'}
         </p>
         
         <div className="flex gap-2">

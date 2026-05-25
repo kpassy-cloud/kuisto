@@ -23,7 +23,7 @@ export function UserMenu({ onOpenPreferences, onOpenHistory, onOpenSubscription,
   const { language } = useI18n()
   const [isOpen, setIsOpen] = useState(false)
   const [showAdminSetup, setShowAdminSetup] = useState(false)
-  const [adminKey, setAdminKey] = useState('akanut-admin-2024')
+  const [adminKey, setAdminKey] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
   if (!isAuthenticated || !user) {
@@ -219,9 +219,15 @@ export function UserMenu({ onOpenPreferences, onOpenHistory, onOpenSubscription,
                 </div>
                 <div>
                   <h3 className="font-semibold">{language === 'fr' ? 'Devenir Administrateur' : 'Become Administrator'}</h3>
-                  <p className="text-xs text-muted-foreground">{language === 'fr' ? 'Entrez la clé secrète' : 'Enter the secret key'}</p>
+                  <p className="text-xs text-muted-foreground">{language === 'fr' ? 'Clé d\'activation requise' : 'Activation key required'}</p>
                 </div>
               </div>
+
+              <p className="text-xs text-amber-600 dark:text-amber-400 mb-3">
+                {language === 'fr'
+                  ? 'Contactez un administrateur existant pour obtenir une clé d\'activation.'
+                  : 'Contact an existing administrator to get an activation key.'}
+              </p>
               
               <div className="space-y-4">
                 <div className="relative">

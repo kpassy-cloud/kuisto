@@ -30,9 +30,16 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { initKey } = body
     
-    // Optional: require an initialization key from environment
-    const expectedInitKey = process.env.ADMIN_INIT_KEY || 'kuisto-init-2024'
-    
+    // Require an initialization key from environment (no default for security)
+    const expectedInitKey = process.env.ADMIN_INIT_KEY
+
+    if (!expectedInitKey) {
+      return NextResponse.json(
+        { error: 'Admin initialization is not configured. Set ADMIN_INIT_KEY environment variable.' },
+        { status: 503 }
+      )
+    }
+
     if (initKey !== expectedInitKey) {
       return NextResponse.json(
         { error: 'Invalid initialization key' },
