@@ -618,23 +618,50 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">      
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header - Modern & Warm */}
       <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-xl supports-[backdrop-filter]:bg-card/60">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            {/* Home button - clickable logo */}
+            <button
+              onClick={() => {
+                setShowRecipeSection(false)
+                setRecipes([])
+                setSelectedIngredients([])
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            >
               <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary via-primary to-terracotta text-primary-foreground shadow-lg shadow-primary/25">
                 <ChefHat className="w-6 h-6" />
               </div>
-              <div>
+              <div className="text-left">
                 <h1 className="font-serif text-xl font-bold bg-gradient-to-r from-primary via-primary to-terracotta bg-clip-text text-transparent">{t('appName')}</h1>
                 <p className="text-xs text-muted-foreground">{t('appTagline')}</p>
               </div>
-            </div>
+            </button>
 
             <div className="flex items-center gap-1">
               <LanguageSwitcher />
+
+              {/* Home button for navigation */}
+              {showRecipeSection && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowRecipeSection(false)
+                    setRecipes([])
+                    setSelectedIngredients([])
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <ChefHat className="w-4 h-4 mr-1" />
+                  <span className="hidden sm:inline">{language === 'fr' ? 'Accueil' : 'Home'}</span>
+                </Button>
+              )}
 
               {/* DEBUG BUTTON - Always visible */}
               <Button
@@ -651,7 +678,7 @@ export default function Home() {
                 }}
                 className="text-xs border-amber-500 text-amber-600"
               >
-                🔧 Debug Admin
+                🔧 Debug
               </Button>
 
               {isAuthenticated && (
