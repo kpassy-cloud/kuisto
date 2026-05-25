@@ -2,51 +2,50 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
 // This route allows promoting a user to admin using a key
+// Only database keys are accepted (no default fallback for security)
 export async function POST(request: Request) {
   try {
     const { email, secretKey } = await request.json()
     
-    // Default setup key (fallback)
-    const defaultSetupKey = process.env.ADMIN_SETUP_KEY || 'kuisto-admin-2024'
+    if (!secretKey) {
+      return NextResponse.json(
+        { error: 'Secret key is required' },
+        { status: 400 }
+      )
+    }
     
-    // Check if key matches default
-    const isDefaultKey = secretKey === defaultSetupKey
+    // Check database for valid keys only (no default key for security)
+    const dbKey = await db.adminKey.findUnique({
+      where: { key: secretKey }
+    })
     
-    // If not default, check database for valid keys
-    let dbKey = null
-    if (!isDefaultKey) {
-      dbKey = await db.adminKey.findUnique({
-        where: { key: secretKey }
-      })
-      
-      // Validate database key
-      if (!dbKey) {
-        return NextResponse.json(
-          { error: 'Invalid setup key' },
-          { status: 403 }
-        )
-      }
-      
-      if (!dbKey.active) {
-        return NextResponse.json(
-          { error: 'This key has been deactivated' },
-          { status: 403 }
-        )
-      }
-      
-      if (dbKey.expiresAt && new Date(dbKey.expiresAt) < new Date()) {
-        return NextResponse.json(
-          { error: 'This key has expired' },
-          { status: 403 }
-        )
-      }
-      
-      if (dbKey.useCount >= dbKey.maxUses) {
-        return NextResponse.json(
-          { error: 'This key has reached its maximum uses' },
-          { status: 403 }
-        )
-      }
+    // Validate database key
+    if (!dbKey) {
+      return NextResponse.json(
+        { error: 'Invalid setup key' },
+        { status: 403 }
+      )
+    }
+    
+    if (!dbKey.active) {
+      return NextResponse.json(
+        { error: 'This key has been deactivated' },
+        { status: 403 }
+      )
+    }
+    
+    if (dbKey.expiresAt && new Date(dbKey.expiresAt) < new Date()) {
+      return NextResponse.json(
+        { error: 'This key has expired' },
+        { status: 403 }
+      )
+    }
+    
+    if (dbKey.useCount >= dbKey.maxUses) {
+      return NextResponse.json(
+        { error: 'This key has reached its maximum uses' },
+        { status: 403 }
+      )
     }
     
     if (!email) {
@@ -63,7 +62,7 @@ export async function POST(request: Request) {
     
     if (!user) {
       return NextResponse.json(
-        { error: 'User not found' },
+        { error: 'User not found. Please create an account first.' },
         { status: 404 }
       )
     }
@@ -74,17 +73,15 @@ export async function POST(request: Request) {
       data: { role: 'admin' }
     })
     
-    // If database key was used, update its usage
-    if (dbKey) {
-      await db.adminKey.update({
-        where: { id: dbKey.id },
-        data: {
-          useCount: { increment: 1 },
-          usedBy: user.id,
-          usedAt: new Date()
-        }
-      })
-    }
+    // Update key usage
+    await db.adminKey.update({
+      where: { id: dbKey.id },
+      data: {
+        useCount: { increment: 1 },
+        usedBy: user.id,
+        usedAt: new Date()
+      }
+    })
     
     // Log this action
     await db.adminLog.create({
@@ -95,7 +92,8 @@ export async function POST(request: Request) {
         targetId: user.id,
         details: JSON.stringify({ 
           email, 
-          keySource: dbKey ? 'database' : 'default' 
+          keyName: dbKey.name,
+          keyId: dbKey.id
         })
       }
     })
