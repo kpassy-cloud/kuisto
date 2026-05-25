@@ -309,15 +309,9 @@ export default function Home() {
   const generateRecipes = async (skipAuthCheck = false) => {
     // For non-authenticated users, check freemium logic
     if (!isAuthenticated && !skipAuthCheck) {
-      // First recipe is free
-      if (recipeGenerationCount === 0) {
-        // Allow first generation, increment counter
-        const newCount = 1
-        setRecipeGenerationCount(newCount)
-        localStorage.setItem('kuisto_recipe_count', newCount.toString())
-        // Continue to generation
-      } else if (!adWatchedForGeneration) {
-        // Show premium lock - user needs to watch an ad for EACH generation after the first
+      // First recipe is free (counter is 0)
+      if (recipeGenerationCount >= 1 && !adWatchedForGeneration) {
+        // NOT first time and NO ad watched - show premium lock
         showPremiumLockModal(
           language === 'fr' ? 'Génération de recettes' : 'Recipe generation',
           language === 'fr' 
@@ -328,6 +322,11 @@ export default function Home() {
         setPendingRecipeGeneration(true)
         return
       }
+      
+      // Increment the generation counter
+      const newCount = recipeGenerationCount + 1
+      setRecipeGenerationCount(newCount)
+      localStorage.setItem('kuisto_recipe_count', newCount.toString())
     }
     
     // Reset the ad watched flag after using it (one-time use)
