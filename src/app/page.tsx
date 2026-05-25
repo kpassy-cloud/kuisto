@@ -1200,7 +1200,7 @@ export default function Home() {
                   </div>
                   <div>
                     <p className="text-xs text-zinc-500">{language === 'fr' ? 'Téléphone' : 'Phone'}</p>
-                    <p className="text-sm text-zinc-300">+1 (514) 123-4567</p>
+                    <p className="text-sm text-zinc-300">+1 (613) 422-5120</p>
                   </div>
                 </li>
                 <li className="flex items-center gap-3">
@@ -1209,7 +1209,7 @@ export default function Home() {
                   </div>
                   <div>
                     <p className="text-xs text-zinc-500">{language === 'fr' ? 'Email' : 'Email'}</p>
-                    <p className="text-sm text-zinc-300">contact@kuisto.ca</p>
+                    <p className="text-sm text-zinc-300">info@kuisto.ca</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
@@ -1220,8 +1220,8 @@ export default function Home() {
                     <p className="text-xs text-zinc-500">{language === 'fr' ? 'Adresse' : 'Address'}</p>
                     <p className="text-sm text-zinc-300">
                       {language === 'fr' 
-                        ? 'Montréal, Québec, Canada'
-                        : 'Montreal, Quebec, Canada'}
+                        ? 'Ottawa, ON, Canada'
+                        : 'Ottawa, ON, Canada'}
                     </p>
                   </div>
                 </li>
