@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Moon, Sun, Heart, Settings, ShoppingCart, Leaf, ChefHat, Calendar, Crown, Shield, ArrowRight, UtensilsCrossed, User, Phone, Mail, MapPin, Facebook, Twitter, Instagram, Youtube } from 'lucide-react'
+import { Moon, Sun, Heart, Settings, ShoppingCart, Leaf, ChefHat, Calendar, Crown, Shield, ArrowRight, UtensilsCrossed, User, Phone, Mail, MapPin, Facebook, Twitter, Instagram, Youtube, X } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { useTheme } from 'next-themes'
 import { ShoppingListPanel } from '@/components/shopping-list-panel'
@@ -61,6 +61,7 @@ export default function Home() {
   const [showRecipeDetail, setShowRecipeDetail] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [showRecipeSection, setShowRecipeSection] = useState(false)
+  const [showCTA, setShowCTA] = useState(true) // CTA banner visibility
   
   // Engagement tracking for signup prompt
   const [showSignupPrompt, setShowSignupPrompt] = useState(false)
@@ -843,8 +844,16 @@ export default function Home() {
         </section>
 
         {/* Guest CTA Section - Encourage sign up */}
-        {!isAuthenticated && !showRecipeSection && (
-          <section className="container mx-auto px-4 py-8">
+        {!isAuthenticated && !showRecipeSection && showCTA && (
+          <section className="container mx-auto px-4 py-8 relative">
+            {/* Close button */}
+            <button
+              onClick={() => setShowCTA(false)}
+              className="absolute top-3 right-7 p-2 rounded-full bg-background/80 hover:bg-background text-muted-foreground hover:text-foreground transition-colors z-10"
+              aria-label={language === 'fr' ? 'Fermer' : 'Close'}
+            >
+              <X className="w-4 h-4" />
+            </button>
             <div className="grid md:grid-cols-2 gap-6 items-center">
               <div>
                 <h2 className="font-serif text-3xl font-bold text-foreground mb-4">
@@ -953,13 +962,22 @@ export default function Home() {
         </AnimatePresence>
 
         {/* CTA to access recipes for authenticated users */}
-        {isAuthenticated && !showRecipeSection && (
+        {isAuthenticated && !showRecipeSection && showCTA && (
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             className="container mx-auto px-4 py-8"
           >
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/5 via-muted/50 to-accent/5 border border-border/50 p-8">
+              {/* Close button */}
+              <button
+                onClick={() => setShowCTA(false)}
+                className="absolute top-3 right-3 p-2 rounded-full bg-background/80 hover:bg-background text-muted-foreground hover:text-foreground transition-colors z-10"
+                aria-label={language === 'fr' ? 'Fermer' : 'Close'}
+              >
+                <X className="w-4 h-4" />
+              </button>
+              
               {/* Decorative elements */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl" />
