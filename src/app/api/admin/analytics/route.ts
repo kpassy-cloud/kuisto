@@ -3,13 +3,25 @@ import { db } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
+// CORS headers for cross-origin requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// Handle OPTIONS preflight requests
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders })
+}
+
 // GET - Get analytics data
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders })
     }
 
     const adminUser = await db.user.findUnique({
@@ -18,7 +30,7 @@ export async function GET(request: NextRequest) {
     })
 
     if (adminUser?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 })
+      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403, headers: corsHeaders })
     }
 
     const { searchParams } = new URL(request.url)
@@ -143,9 +155,9 @@ export async function GET(request: NextRequest) {
       dailyStats,
       adPerformance,
       recentLogs: logsWithAdmin
-    })
+    }, { headers: corsHeaders })
   } catch (error) {
     console.error('Error fetching analytics:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: corsHeaders })
   }
 }

@@ -401,12 +401,19 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(adData)
         })
+        const data = await res.json()
         if (res.ok) {
           toast({ title: language === 'fr' ? 'Publicité mise à jour' : 'Ad updated' })
           setShowAdModal(false)
           setSelectedAd(null)
           setIsEditMode(false)
           fetchAds()
+        } else {
+          toast({ 
+            title: language === 'fr' ? 'Erreur' : 'Error', 
+            description: data.error || data.details || 'Unknown error',
+            variant: 'destructive' 
+          })
         }
       } else {
         // Create new ad
@@ -415,14 +422,26 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(adData)
         })
+        const data = await res.json()
         if (res.ok) {
           toast({ title: language === 'fr' ? 'Publicité créée' : 'Ad created' })
           setShowAdModal(false)
           fetchAds()
+        } else {
+          toast({ 
+            title: language === 'fr' ? 'Erreur' : 'Error', 
+            description: data.error || data.details || 'Unknown error',
+            variant: 'destructive' 
+          })
         }
       }
     } catch (err) {
-      toast({ title: language === 'fr' ? 'Erreur' : 'Error', variant: 'destructive' })
+      console.error('Error creating ad:', err)
+      toast({ 
+        title: language === 'fr' ? 'Erreur' : 'Error', 
+        description: err instanceof Error ? err.message : 'Network error',
+        variant: 'destructive' 
+      })
     }
   }
 
@@ -1448,7 +1467,7 @@ function UserModal({ isOpen, onClose, user, onUpdateSubscription, onGrantBonus, 
 function AdModal({ isOpen, onClose, onCreate, editAd, isEditMode, language }: {
   isOpen: boolean
   onClose: () => void
-  onCreate: (data: Partial<Ad>) => void
+  onCreate: (data: Partial<Ad>) => Promise<void>
   editAd: Ad | null
   isEditMode: boolean
   language: string
@@ -1464,6 +1483,7 @@ function AdModal({ isOpen, onClose, onCreate, editAd, isEditMode, language }: {
     targetCountries: '',
     priority: 0
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Populate form when editing
   React.useEffect(() => {
@@ -1496,12 +1516,27 @@ function AdModal({ isOpen, onClose, onCreate, editAd, isEditMode, language }: {
 
   if (!isOpen) return null
 
-  const handleSubmit = () => {
-    onCreate({
-      ...formData,
-      targetCountries: formData.targetCountries ? JSON.stringify(formData.targetCountries.split(',').map(c => c.trim())) : null
-    })
-    onClose()
+  const handleSubmit = async () => {
+    // Validate required fields
+    if (!formData.title.trim()) {
+      toast({ 
+        title: language === 'fr' ? 'Erreur' : 'Error', 
+        description: language === 'fr' ? 'Le titre est requis' : 'Title is required',
+        variant: 'destructive' 
+      })
+      return
+    }
+    
+    setIsSubmitting(true)
+    try {
+      // Call onCreate and let the parent handle closing
+      await onCreate({
+        ...formData,
+        targetCountries: formData.targetCountries ? JSON.stringify(formData.targetCountries.split(',').map(c => c.trim())) : null
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -1568,8 +1603,15 @@ function AdModal({ isOpen, onClose, onCreate, editAd, isEditMode, language }: {
             value={formData.priority}
             onChange={e => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
           />
-          <Button onClick={handleSubmit} className="w-full">
-            {isEditMode ? (language === 'fr' ? 'Mettre à jour' : 'Update') : (language === 'fr' ? 'Créer' : 'Create')}
+          <Button onClick={handleSubmit} className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                {language === 'fr' ? 'Création...' : 'Creating...'}
+              </span>
+            ) : (
+              isEditMode ? (language === 'fr' ? 'Mettre à jour' : 'Update') : (language === 'fr' ? 'Créer' : 'Create')
+            )}
           </Button>
         </CardContent>
       </Card>

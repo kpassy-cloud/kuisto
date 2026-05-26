@@ -3,13 +3,25 @@ import { db } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
+// CORS headers for cross-origin requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// Handle OPTIONS preflight requests
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders })
+}
+
 // GET - List all ads
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders })
     }
 
     const adminUser = await db.user.findUnique({
@@ -18,7 +30,7 @@ export async function GET(request: NextRequest) {
     })
 
     if (adminUser?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 })
+      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403, headers: corsHeaders })
     }
 
     const { searchParams } = new URL(request.url)
@@ -37,10 +49,10 @@ export async function GET(request: NextRequest) {
       ]
     })
 
-    return NextResponse.json({ ads })
+    return NextResponse.json({ ads }, { headers: corsHeaders })
   } catch (error) {
     console.error('Error fetching ads:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: corsHeaders })
   }
 }
 
@@ -50,7 +62,7 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders })
     }
 
     const adminUser = await db.user.findUnique({
@@ -59,7 +71,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (adminUser?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 })
+      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403, headers: corsHeaders })
     }
 
     const body = await request.json()
@@ -78,6 +90,11 @@ export async function POST(request: NextRequest) {
       endDate,
       priority = 0
     } = body
+
+    // Validate required fields
+    if (!title) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400, headers: corsHeaders })
+    }
 
     const ad = await db.ad.create({
       data: {
@@ -98,19 +115,28 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    await db.adminLog.create({
-      data: {
-        adminId: adminUser.id,
-        action: 'ad_created',
-        targetType: 'ad',
-        targetId: ad.id,
-        details: JSON.stringify({ title, type })
-      }
-    })
+    // Try to create admin log, but don't fail if it errors
+    try {
+      await db.adminLog.create({
+        data: {
+          adminId: adminUser.id,
+          action: 'ad_created',
+          targetType: 'ad',
+          targetId: ad.id,
+          details: JSON.stringify({ title, type })
+        }
+      })
+    } catch (logError) {
+      console.error('Failed to create admin log:', logError)
+      // Don't fail the request if logging fails
+    }
 
-    return NextResponse.json({ ad })
+    return NextResponse.json({ ad, success: true }, { headers: corsHeaders })
   } catch (error) {
     console.error('Error creating ad:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Internal server error', 
+      details: error instanceof Error ? error.message : 'Unknown error' 
+    }, { status: 500, headers: corsHeaders })
   }
 }

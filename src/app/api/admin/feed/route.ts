@@ -3,13 +3,25 @@ import { db } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
+// CORS headers for cross-origin requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// Handle OPTIONS preflight requests
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders })
+}
+
 // GET - List all feed items
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders })
     }
 
     const adminUser = await db.user.findUnique({
@@ -18,7 +30,7 @@ export async function GET(request: NextRequest) {
     })
 
     if (adminUser?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 })
+      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403, headers: corsHeaders })
     }
 
     const { searchParams } = new URL(request.url)
@@ -38,10 +50,10 @@ export async function GET(request: NextRequest) {
       ]
     })
 
-    return NextResponse.json({ feed })
+    return NextResponse.json({ feed }, { headers: corsHeaders })
   } catch (error) {
     console.error('Error fetching feed:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: corsHeaders })
   }
 }
 
@@ -51,7 +63,7 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders })
     }
 
     const adminUser = await db.user.findUnique({
@@ -60,7 +72,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (adminUser?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 })
+      return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403, headers: corsHeaders })
     }
 
     const body = await request.json()
@@ -78,6 +90,11 @@ export async function POST(request: NextRequest) {
       featured = false,
       sticky = false
     } = body
+
+    // Validate required fields
+    if (!title || !content) {
+      return NextResponse.json({ error: 'Title and content are required' }, { status: 400, headers: corsHeaders })
+    }
 
     const feedItem = await db.newsFeed.create({
       data: {
@@ -97,19 +114,27 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    await db.adminLog.create({
-      data: {
-        adminId: adminUser.id,
-        action: 'feed_created',
-        targetType: 'news',
-        targetId: feedItem.id,
-        details: JSON.stringify({ title, category })
-      }
-    })
+    // Try to create admin log
+    try {
+      await db.adminLog.create({
+        data: {
+          adminId: adminUser.id,
+          action: 'feed_created',
+          targetType: 'news',
+          targetId: feedItem.id,
+          details: JSON.stringify({ title, category })
+        }
+      })
+    } catch (logError) {
+      console.error('Failed to create admin log:', logError)
+    }
 
-    return NextResponse.json({ feedItem })
+    return NextResponse.json({ feedItem, success: true }, { headers: corsHeaders })
   } catch (error) {
     console.error('Error creating feed item:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500, headers: corsHeaders })
   }
 }
