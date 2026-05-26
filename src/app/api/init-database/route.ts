@@ -263,6 +263,34 @@ export async function POST() {
     await db.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "AdminKey_key_idx" ON "AdminKey"("key");`)
     await db.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "AdminKey_active_idx" ON "AdminKey"("active");`)
     
+    // Create Ad table
+    await db.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "Ad" (
+        "id" TEXT NOT NULL,
+        "title" TEXT NOT NULL,
+        "description" TEXT,
+        "imageUrl" TEXT,
+        "linkUrl" TEXT,
+        "buttonText" TEXT,
+        "type" TEXT NOT NULL DEFAULT 'banner',
+        "targetTiers" TEXT NOT NULL DEFAULT 'free',
+        "targetCountries" TEXT,
+        "targetRegions" TEXT,
+        "active" BOOLEAN NOT NULL DEFAULT true,
+        "startDate" TIMESTAMP(3),
+        "endDate" TIMESTAMP(3),
+        "priority" INTEGER NOT NULL DEFAULT 0,
+        "impressions" INTEGER NOT NULL DEFAULT 0,
+        "clicks" INTEGER NOT NULL DEFAULT 0,
+        "createdBy" TEXT,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL,
+        CONSTRAINT "Ad_pkey" PRIMARY KEY ("id")
+      );
+    `)
+    await db.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Ad_active_type_idx" ON "Ad"("active", "type");`)
+    await db.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Ad_startDate_endDate_idx" ON "Ad"("startDate", "endDate");`)
+    
     // Create AdImpression table
     await db.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "AdImpression" (
@@ -277,6 +305,100 @@ export async function POST() {
     `)
     await db.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "AdImpression_adId_userId_idx" ON "AdImpression"("adId", "userId");`)
     await db.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "AdImpression_userId_viewedAt_idx" ON "AdImpression"("userId", "viewedAt");`)
+    
+    // Create NewsFeed table
+    await db.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "NewsFeed" (
+        "id" TEXT NOT NULL,
+        "title" TEXT NOT NULL,
+        "content" TEXT NOT NULL,
+        "imageUrl" TEXT,
+        "linkUrl" TEXT,
+        "category" TEXT NOT NULL DEFAULT 'tip',
+        "targetTiers" TEXT NOT NULL DEFAULT 'all',
+        "targetCountries" TEXT,
+        "active" BOOLEAN NOT NULL DEFAULT true,
+        "publishAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "expiresAt" TIMESTAMP(3),
+        "featured" BOOLEAN NOT NULL DEFAULT false,
+        "sticky" BOOLEAN NOT NULL DEFAULT false,
+        "views" INTEGER NOT NULL DEFAULT 0,
+        "likes" INTEGER NOT NULL DEFAULT 0,
+        "authorId" TEXT,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL,
+        CONSTRAINT "NewsFeed_pkey" PRIMARY KEY ("id")
+      );
+    `)
+    await db.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "NewsFeed_active_publishAt_idx" ON "NewsFeed"("active", "publishAt");`)
+    await db.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "NewsFeed_featured_sticky_idx" ON "NewsFeed"("featured", "sticky");`)
+    
+    // Create Announcement table
+    await db.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "Announcement" (
+        "id" TEXT NOT NULL,
+        "title" TEXT NOT NULL,
+        "message" TEXT NOT NULL,
+        "type" TEXT NOT NULL DEFAULT 'info',
+        "icon" TEXT,
+        "targetUsers" TEXT NOT NULL DEFAULT 'all',
+        "targetCountries" TEXT,
+        "displayType" TEXT NOT NULL DEFAULT 'banner',
+        "dismissible" BOOLEAN NOT NULL DEFAULT true,
+        "active" BOOLEAN NOT NULL DEFAULT true,
+        "startDate" TIMESTAMP(3),
+        "endDate" TIMESTAMP(3),
+        "views" INTEGER NOT NULL DEFAULT 0,
+        "dismissals" INTEGER NOT NULL DEFAULT 0,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL,
+        CONSTRAINT "Announcement_pkey" PRIMARY KEY ("id")
+      );
+    `)
+    await db.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Announcement_active_startDate_endDate_idx" ON "Announcement"("active", "startDate", "endDate");`)
+    
+    // Create Analytics table
+    await db.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "Analytics" (
+        "id" TEXT NOT NULL,
+        "date" TEXT NOT NULL,
+        "newUsers" INTEGER NOT NULL DEFAULT 0,
+        "activeUsers" INTEGER NOT NULL DEFAULT 0,
+        "newSubscriptions" INTEGER NOT NULL DEFAULT 0,
+        "canceledSubscriptions" INTEGER NOT NULL DEFAULT 0,
+        "premiumUsers" INTEGER NOT NULL DEFAULT 0,
+        "proUsers" INTEGER NOT NULL DEFAULT 0,
+        "freeUsers" INTEGER NOT NULL DEFAULT 0,
+        "revenue" DOUBLE PRECISION NOT NULL DEFAULT 0,
+        "recipesGenerated" INTEGER NOT NULL DEFAULT 0,
+        "avgRecipesPerUser" DOUBLE PRECISION NOT NULL DEFAULT 0,
+        "adImpressions" INTEGER NOT NULL DEFAULT 0,
+        "adClicks" INTEGER NOT NULL DEFAULT 0,
+        "adRevenue" DOUBLE PRECISION NOT NULL DEFAULT 0,
+        "feedViews" INTEGER NOT NULL DEFAULT 0,
+        "feedEngagement" DOUBLE PRECISION NOT NULL DEFAULT 0,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL,
+        CONSTRAINT "Analytics_pkey" PRIMARY KEY ("id")
+      );
+    `)
+    await db.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Analytics_date_key" ON "Analytics"("date");`)
+    
+    // Create AdminLog table
+    await db.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "AdminLog" (
+        "id" TEXT NOT NULL,
+        "adminId" TEXT NOT NULL,
+        "action" TEXT NOT NULL,
+        "targetType" TEXT NOT NULL,
+        "targetId" TEXT,
+        "details" TEXT,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "AdminLog_pkey" PRIMARY KEY ("id")
+      );
+    `)
+    await db.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "AdminLog_adminId_idx" ON "AdminLog"("adminId");`)
+    await db.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "AdminLog_targetType_targetId_idx" ON "AdminLog"("targetType", "targetId");`)
     
     // Create foreign key constraints
     try {
