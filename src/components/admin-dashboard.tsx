@@ -1392,7 +1392,7 @@ function UserModal({ isOpen, onClose, user, onUpdateSubscription, onGrantBonus, 
 
   return (
     <div 
-      className="fixed inset-0 z-[150] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
+      className="fixed inset-0 z-[250] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
       onClick={onClose}
       style={{ pointerEvents: 'auto' }}
     >
@@ -1541,7 +1541,7 @@ function AdModal({ isOpen, onClose, onCreate, editAd, isEditMode, language }: {
 
   return (
     <div 
-      className="fixed inset-0 z-[150] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
+      className="fixed inset-0 z-[250] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
       onClick={onClose}
       style={{ pointerEvents: 'auto' }}
     >
@@ -1644,7 +1644,7 @@ function FeedModal({ isOpen, onClose, onCreate, language }: {
 
   return (
     <div 
-      className="fixed inset-0 z-[150] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
+      className="fixed inset-0 z-[250] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
       onClick={onClose}
       style={{ pointerEvents: 'auto' }}
     >
@@ -1742,7 +1742,7 @@ function AnnouncementModal({ isOpen, onClose, onCreate, language }: {
 
   return (
     <div 
-      className="fixed inset-0 z-[150] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
+      className="fixed inset-0 z-[250] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
       onClick={onClose}
       style={{ pointerEvents: 'auto' }}
     >
