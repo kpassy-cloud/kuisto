@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
+// CORS headers helper
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// Handle OPTIONS for CORS preflight
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders })
+}
+
 // POST /api/admin/promote - Promote a user to admin
 export async function POST(request: NextRequest) {
   try {
@@ -11,14 +23,14 @@ export async function POST(request: NextRequest) {
     if (secret !== 'kuisto-admin-promote-2024') {
       return NextResponse.json(
         { error: 'UNAUTHORIZED', message: 'Code secret invalide' },
-        { status: 401 }
+        { status: 401, headers: corsHeaders }
       )
     }
 
     if (!email) {
       return NextResponse.json(
         { error: 'EMAIL_REQUIRED', message: 'Email requis' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       )
     }
 
@@ -31,8 +43,8 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'USER_NOT_FOUND', message: 'Utilisateur non trouvé' },
-        { status: 404 }
+        { error: 'USER_NOT_FOUND', message: 'Utilisateur non trouvé. Créez d\'abord un compte.' },
+        { status: 404, headers: corsHeaders }
       )
     }
 
@@ -53,13 +65,13 @@ export async function POST(request: NextRequest) {
         name: updatedUser.name,
         role: updatedUser.role
       }
-    })
+    }, { headers: corsHeaders })
 
   } catch (error) {
     console.error('[ADMIN] Promotion error:', error)
     return NextResponse.json(
       { error: 'SERVER_ERROR', message: 'Erreur lors de la promotion', details: String(error) },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     )
   }
 }
@@ -81,12 +93,12 @@ export async function GET() {
     return NextResponse.json({
       users,
       count: users.length
-    })
+    }, { headers: corsHeaders })
   } catch (error) {
     console.error('[ADMIN] List users error:', error)
     return NextResponse.json(
       { error: 'SERVER_ERROR', message: 'Erreur lors de la récupération des utilisateurs' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     )
   }
 }
