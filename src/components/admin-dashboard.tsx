@@ -459,6 +459,38 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
     setShowAdModal(true)
   }
 
+  // Seed demo ads
+  const handleSeedDemoAds = async () => {
+    try {
+      const res = await fetch('/api/seed-ads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast({ 
+          title: language === 'fr' ? 'Publicités ajoutées !' : 'Ads added!',
+          description: language === 'fr' ? `${data.ads?.length || 0} publicités démo créées` : `${data.ads?.length || 0} demo ads created`
+        })
+        fetchAds()
+      } else {
+        toast({ 
+          title: language === 'fr' ? 'Erreur' : 'Error', 
+          description: data.error || 'Unknown error',
+          variant: 'destructive' 
+        })
+      }
+    } catch (err) {
+      console.error('Error seeding ads:', err)
+      toast({ 
+        title: language === 'fr' ? 'Erreur' : 'Error', 
+        description: err instanceof Error ? err.message : 'Network error',
+        variant: 'destructive' 
+      })
+    }
+  }
+
   // Create new feed item
   const handleCreateFeedItem = async (feedData: Partial<FeedItem>) => {
     try {
@@ -844,10 +876,18 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <h2 className="font-serif text-xl font-bold">{t('ads')}</h2>
-                    <Button onClick={handleOpenCreateAd}>
-                      <Plus className="w-4 h-4 mr-1" />
-                      {t('createAd')}
-                    </Button>
+                    <div className="flex gap-2">
+                      {ads.length === 0 && (
+                        <Button onClick={handleSeedDemoAds} variant="outline">
+                          <Sparkles className="w-4 h-4 mr-1" />
+                          {language === 'fr' ? 'Ajouter démos' : 'Add demo ads'}
+                        </Button>
+                      )}
+                      <Button onClick={handleOpenCreateAd}>
+                        <Plus className="w-4 h-4 mr-1" />
+                        {t('createAd')}
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="grid gap-4">

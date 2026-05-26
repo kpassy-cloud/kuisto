@@ -3,6 +3,18 @@ import { db } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
+// CORS headers for cross-origin requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// Handle OPTIONS preflight requests
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders })
+}
+
 // Sample Canadian food/cooking related partner ads
 const SAMPLE_ADS = [
   {
@@ -134,7 +146,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ 
         error: 'Ads already seeded. Admin access required to re-seed.',
         existingCount: existingAds 
-      }, { status: 403 })
+      }, { status: 403, headers: corsHeaders })
     }
 
     // If admin and ads exist, clear them first
@@ -190,10 +202,10 @@ export async function POST(request: NextRequest) {
       success: true,
       message: `Seeded ${createdAds.length} sample ads`,
       ads: createdAds
-    })
+    }, { headers: corsHeaders })
   } catch (error) {
     console.error('Error seeding ads:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: corsHeaders })
   }
 }
 
@@ -204,9 +216,9 @@ export async function GET() {
     return NextResponse.json({ 
       seeded: count > 0,
       count 
-    })
+    }, { headers: corsHeaders })
   } catch (error) {
     console.error('Error checking ads:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: corsHeaders })
   }
 }
