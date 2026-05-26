@@ -461,6 +461,14 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
 
   // Seed demo ads
   const handleSeedDemoAds = async () => {
+    // Ask for confirmation if ads already exist
+    if (ads.length > 0) {
+      const confirmMsg = language === 'fr' 
+        ? 'Cela va supprimer toutes les publicités existantes et les remplacer par les démos. Continuer ?'
+        : 'This will delete all existing ads and replace them with demo ads. Continue?'
+      if (!confirm(confirmMsg)) return
+    }
+    
     try {
       const res = await fetch('/api/seed-ads', {
         method: 'POST',
@@ -877,12 +885,13 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
                   <div className="flex justify-between items-center">
                     <h2 className="font-serif text-xl font-bold">{t('ads')}</h2>
                     <div className="flex gap-2">
-                      {ads.length === 0 && (
-                        <Button onClick={handleSeedDemoAds} variant="outline">
-                          <Sparkles className="w-4 h-4 mr-1" />
-                          {language === 'fr' ? 'Ajouter démos' : 'Add demo ads'}
-                        </Button>
-                      )}
+                      <Button onClick={handleSeedDemoAds} variant="outline">
+                        <Sparkles className="w-4 h-4 mr-1" />
+                        {ads.length === 0 
+                          ? (language === 'fr' ? 'Ajouter démos' : 'Add demo ads')
+                          : (language === 'fr' ? 'Réinitialiser démos' : 'Reset demo ads')
+                        }
+                      </Button>
                       <Button onClick={handleOpenCreateAd}>
                         <Plus className="w-4 h-4 mr-1" />
                         {t('createAd')}
