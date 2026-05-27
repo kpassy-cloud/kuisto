@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { soundEffects } from '@/lib/sounds'
+import { IngredientSlotPicker } from '@/components/ingredient-slot-picker'
 
 interface Ingredient {
   id: string
@@ -261,12 +262,14 @@ export function CookingHero({
     return translations[key]?.[language as 'fr' | 'en'] || key
   }
 
-  const filteredIngredients = QUICK_INGREDIENTS.filter(ing => {
-    const matchesSearch = ing.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          ing.id.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = activeCategory === 'all' || ing.category === activeCategory
-    return matchesSearch && matchesCategory
-  })
+  const filteredIngredients = useMemo(() => {
+    return QUICK_INGREDIENTS.filter(ing => {
+      const matchesSearch = ing.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            ing.id.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesCategory = activeCategory === 'all' || ing.category === activeCategory
+      return matchesSearch && matchesCategory
+    })
+  }, [searchQuery, activeCategory])
 
   const canGenerate = selectedIngredients.length >= 3
 
@@ -289,15 +292,14 @@ export function CookingHero({
           </div>
           <div className="max-w-4xl mx-auto">
             <div className="h-12 bg-muted rounded animate-pulse mb-4" />
-            <div className="flex gap-2 mb-6">
+            <div className="flex gap-2 mb-6 justify-center">
               {[1, 2, 3, 4, 5, 6].map(i => (
                 <div key={i} className="h-9 w-24 bg-muted rounded animate-pulse" />
               ))}
             </div>
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map(i => (
-                <div key={i} className="h-20 bg-muted rounded-xl animate-pulse" />
-              ))}
+            {/* Slot picker skeleton */}
+            <div className="h-48 md:h-56 flex items-center justify-center">
+              <div className="w-24 h-24 md:w-32 md:h-32 bg-muted rounded-2xl animate-pulse" />
             </div>
           </div>
         </div>
@@ -405,46 +407,14 @@ export function CookingHero({
           </div>
         </div>
 
-        {/* Ingredient Grid */}
+        {/* Ingredient Slot Picker */}
         <div className="max-w-4xl mx-auto mb-8">
-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
-            {filteredIngredients.map((ingredient) => {
-              const isSelected = selectedIngredients.some(i => i.id === ingredient.id)
-              return (
-                <motion.button
-                  key={ingredient.id}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    soundEffects.select()
-                    onToggleIngredient(ingredient)
-                  }}
-                  className={`
-                    relative flex flex-col items-center justify-center p-3 rounded-xl
-                    transition-all duration-200 border-2
-                    ${isSelected 
-                      ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/25' 
-                      : 'bg-background border-border hover:border-primary/50 hover:shadow-md'
-                    }
-                  `}
-                >
-                  <span className="text-2xl mb-1">{ingredient.emoji}</span>
-                  <span className="text-xs font-medium text-center leading-tight">
-                    {ingredient.name}
-                  </span>
-                  {isSelected && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center"
-                    >
-                      <Plus className="w-3 h-3 text-primary-foreground rotate-45" />
-                    </motion.div>
-                  )}
-                </motion.button>
-              )
-            })}
-          </div>
+          <IngredientSlotPicker
+            ingredients={filteredIngredients}
+            selectedIngredients={selectedIngredients}
+            onToggleIngredient={onToggleIngredient}
+            language={language as 'fr' | 'en'}
+          />
         </div>
 
         {/* Generate Button */}
