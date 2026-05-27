@@ -364,3 +364,40 @@ Stage Summary:
 - Full CRUD operations for all admin resources
 - Audit logging for admin actions
 - All features bilingual (FR/EN)
+
+---
+Task ID: 15
+Agent: Main Agent
+Task: Remove fairy lights effect and add bilingual ingredient support
+
+Work Log:
+- Fetched latest changes from GitHub (remote had newer commits)
+- Reset to origin/main to get latest code
+- Removed casino light decorations (guirlande) from ingredient slot picker
+  - Deleted the animated colored dots at the top of the slot machine
+- Added bilingual support for all 238 ingredients:
+  - Added nameEn field to Ingredient interface
+  - Added English names to all ingredients in all categories:
+    - Vegetables (30 items)
+    - Meats (14 items)
+    - Seafood (14 items)
+    - Dairy (14 items)
+    - Protein (10 items)
+    - Carbs (14 items)
+    - Fruits (20 items)
+    - Herbs (17 items)
+    - Condiments (13 items)
+    - Nuts (15 items)
+    - Others (77 items)
+- Updated display logic:
+  - ingredient-slot-picker.tsx shows English name when language is 'en'
+  - cooking-hero.tsx displays selected ingredients in the correct language
+- Updated search functionality:
+  - Search now works with both French and English ingredient names
+- Successfully committed and pushed to GitHub
+
+Stage Summary:
+- Fairy lights/guirlande effect removed from slot machine
+- Complete bilingual ingredient support (French/English)
+- Search works in both languages
+- Changes pushed to GitHub successfully
