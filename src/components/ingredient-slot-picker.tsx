@@ -253,12 +253,19 @@ export function IngredientSlotPicker({
 
   // Get visible items (5 on each side for more depth)
   const getVisibleItems = useCallback(() => {
+    // Guard against empty ingredients array
+    if (totalItems === 0 || ingredients.length === 0) {
+      return []
+    }
     const items = []
     for (let offset = -5; offset <= 5; offset++) {
       let index = centerIndex + offset
-      if (index < 0) index = totalItems + index
-      if (index >= totalItems) index = index - totalItems
-      items.push({ ingredient: ingredients[index], offset, index })
+      // Handle wrapping with modulo for safety
+      index = ((index % totalItems) + totalItems) % totalItems
+      const ingredient = ingredients[index]
+      if (ingredient) {
+        items.push({ ingredient, offset, index })
+      }
     }
     return items
   }, [centerIndex, ingredients, totalItems])
@@ -370,6 +377,13 @@ export function IngredientSlotPicker({
     setLuckyMessage(getLuckyMessage(selectedIngredients.length))
   }, [selectedIngredients.length, getLuckyMessage])
 
+  // Reset centerIndex when ingredients change and it's out of bounds
+  useEffect(() => {
+    if (centerIndex >= totalItems && totalItems > 0) {
+      setCenterIndex(0)
+    }
+  }, [totalItems, centerIndex])
+
   // Select center ingredient with celebration
   const handleSelectCenter = () => {
     if (centerIngredient && !autoSpinActive) {
@@ -398,6 +412,22 @@ export function IngredientSlotPicker({
   }
 
   const categoryColors = centerIngredient ? getCategoryColor(centerIngredient.category) : null
+
+  // Show empty state when no ingredients
+  if (totalItems === 0 || ingredients.length === 0) {
+    return (
+      <div className="w-full relative">
+        <div className="text-center py-16 px-4">
+          <div className="text-6xl mb-4">🔍</div>
+          <p className="text-muted-foreground text-lg">
+            {language === 'fr'
+              ? 'Aucun ingrédient trouvé. Essayez une autre recherche!'
+              : 'No ingredients found. Try another search!'}
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="w-full relative">
