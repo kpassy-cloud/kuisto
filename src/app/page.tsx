@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Moon, Sun, Heart, Settings, ShoppingCart, Leaf, ChefHat, Calendar, Crown, Shield, ArrowRight, UtensilsCrossed, User, Phone, Mail, MapPin, Facebook, Twitter, Instagram, Youtube, X } from 'lucide-react'
+import { Moon, Sun, Heart, Settings, ShoppingCart, ChefHat, Calendar, Crown, Shield, UtensilsCrossed, User, Newspaper, X, Facebook, Twitter, Instagram, Youtube, Phone, Mail, MapPin, Leaf } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { useTheme } from 'next-themes'
 import { ShoppingListPanel } from '@/components/shopping-list-panel'
@@ -11,9 +11,6 @@ import ChefMode from '@/components/chef-mode'
 import { soundEffects } from '@/lib/sounds'
 import { useI18n } from '@/lib/i18n'
 import { LanguageSwitcher } from '@/components/language-switcher'
-import { DynamicHeader } from '@/components/dynamic-header'
-import { MoodCarousel } from '@/components/mood-carousel'
-import { DailyChallenge } from '@/components/daily-challenge'
 import { IngredientSelector, type Ingredient } from '@/components/ingredient-selector'
 import { RecipeList, type Recipe } from '@/components/recipe-list'
 import { PreferencesPanel, type Preferences } from '@/components/preferences-panel'
@@ -24,9 +21,9 @@ import { SubscriptionDashboard } from '@/components/subscription-dashboard'
 import { AdminDashboard } from '@/components/admin-dashboard'
 import { UserMenu } from '@/components/user-menu'
 import { MealPlanner } from '@/components/meal-planner'
-import { SearchBar } from '@/components/search-bar'
 import { RecipeDetailModal } from '@/components/recipe-detail-modal'
-import { NewsFeedHero } from '@/components/news-feed-hero'
+import { NewsFeedSection } from '@/components/news-feed-section'
+import { CookingHero } from '@/components/cooking-hero'
 import { SignupInvitationModal } from '@/components/signup-invitation-modal'
 import { PremiumLockModal } from '@/components/premium-lock-modal'
 import { VideoAdModal } from '@/components/video-ad-modal'
@@ -841,186 +838,64 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="flex-1">
-        {/* HERO - News Feed (Always visible) */}
-        <section className="container mx-auto px-4 py-8">
-          <NewsFeedHero 
-            onSignUpClick={() => setShowAuthModal(true)}
-            isAuthenticated={isAuthenticated}
-            onGoToCooking={() => setShowRecipeSection(true)}
-          />
-          
-          {/* Native Ad for non-authenticated users */}
-          {!isAuthenticated && (
-            <div className="mt-6">
-              <NativeAdBanner position="top" />
-            </div>
-          )}
-        </section>
+        {/* HERO - Cooking Focused */}
+        <CookingHero
+          onGenerate={generateRecipes}
+          isLoading={isLoading}
+          selectedIngredients={selectedIngredients}
+          onToggleIngredient={toggleIngredient}
+          onClearAll={clearAllIngredients}
+          isAuthenticated={isAuthenticated}
+          onSignUp={() => setShowAuthModal(true)}
+        />
 
-        {/* Guest CTA Section - Encourage sign up */}
-        {!isAuthenticated && !showRecipeSection && showCTA && (
-          <section className="container mx-auto px-4 py-8 relative">
-            {/* Close button */}
-            <button
-              onClick={() => setShowCTA(false)}
-              className="absolute top-3 right-7 p-2 rounded-full bg-background/80 hover:bg-background text-muted-foreground hover:text-foreground transition-colors z-10"
-              aria-label={language === 'fr' ? 'Fermer' : 'Close'}
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <div className="grid md:grid-cols-2 gap-6 items-center">
-              <div>
-                <h2 className="font-serif text-3xl font-bold text-foreground mb-4">
-                  {language === 'fr' 
-                    ? 'Créez des recettes avec vos ingrédients' 
-                    : 'Create recipes with your ingredients'}
-                </h2>
-                <p className="text-muted-foreground mb-6">
-                  {language === 'fr'
-                    ? 'Inscrivez-vous gratuitement pour générer des recettes personnalisées basées sur ce que vous avez dans votre cuisine.'
-                    : 'Sign up for free to generate personalized recipes based on what you have in your kitchen.'}
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <Button
-                    onClick={() => setShowAuthModal(true)}
-                    className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary"
-                  >
-                    <User className="w-4 h-4 mr-2" />
-                    {language === 'fr' ? 'Créer un compte gratuit' : 'Create free account'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      // Read directly from localStorage for accurate count
-                      const guestCount = parseInt(localStorage.getItem('kuisto_guest_recipe_count') || '0', 10)
-                      
-                      // First recipe is free - show recipe section directly
-                      if (guestCount === 0) {
-                        setShowRecipeSection(true)
-                        // Scroll to recipe section
-                        setTimeout(() => {
-                          const recipeSection = document.querySelector('[data-recipe-section]')
-                          if (recipeSection) {
-                            recipeSection.scrollIntoView({ behavior: 'smooth' })
-                          }
-                        }, 100)
-                      } else {
-                        // Guest already used free recipe - MUST sign up (no ad option for guests)
-                        setShowAuthModal(true)
-                        toast({
-                          title: language === 'fr' ? 'Inscription requise' : 'Signup required',
-                          description: language === 'fr' 
-                            ? 'Créez un compte gratuit pour continuer à générer des recettes!'
-                            : 'Create a free account to continue generating recipes!',
-                        })
-                      }
-                    }}
-                  >
-                    <Crown className="w-4 h-4 mr-2" />
-                    {language === 'fr' ? 'Essayer gratuitement' : 'Try for free'}
-                  </Button>
-                </div>
-              </div>
-              <div>
-                <NativeAdBanner position="middle" />
-              </div>
-            </div>
+        {/* Recipe Results Section */}
+        {(recipes.length > 0 || isLoading || error) && (
+          <section className="container mx-auto px-4 py-8 border-t bg-muted/30">
+            <RecipeList
+              recipes={recipes}
+              isLoading={isLoading}
+              canGenerate={selectedIngredients.length >= 3}
+              selectedCount={selectedIngredients.length}
+              minIngredients={3}
+              isDemoMode={isDemoMode}
+              onGenerate={generateRecipes}
+              onToggleFavorite={toggleFavorite}
+              onStartCooking={setChefModeRecipe}
+              onAddToShoppingList={addToShoppingList}
+              onViewDetails={handleViewRecipeDetails}
+              isFavorite={isFavorite}
+              remainingRecipes={remainingRecipes}
+              isPremium={isAuthenticated && plan === 'premium'}
+            />
+            {error && (
+              <div className="text-center text-destructive mt-4">{error}</div>
+            )}
           </section>
         )}
 
-        {/* RECIPE SECTION - Secondary, requires auth OR freemium trial */}
-        <AnimatePresence>
-          {showRecipeSection && (
-            <motion.section
-              data-recipe-section
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="border-t bg-muted/30"
-            >
-              <div className="container mx-auto px-4 py-8">
-                <DynamicHeader />
-                <MoodCarousel selectedMood={selectedMood} onMoodSelect={setSelectedMood} />
-                <DailyChallenge />
-                
-                <div className="grid lg:grid-cols-[1fr,400px] gap-6 mt-6">
-                  <IngredientSelector
-                    selectedIngredients={selectedIngredients}
-                    onToggle={toggleIngredient}
-                    onRemove={removeIngredient}
-                    onClearAll={clearAllIngredients}
-                  />
-
-                  <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-100px)]">
-                    <RecipeList
-                      recipes={recipes}
-                      isLoading={isLoading}
-                      canGenerate={selectedIngredients.length >= 3}
-                      selectedCount={selectedIngredients.length}
-                      minIngredients={3}
-                      isDemoMode={isDemoMode}
-                      onGenerate={generateRecipes}
-                      onToggleFavorite={toggleFavorite}
-                      onStartCooking={setChefModeRecipe}
-                      onAddToShoppingList={addToShoppingList}
-                      onViewDetails={handleViewRecipeDetails}
-                      isFavorite={isFavorite}
-                      remainingRecipes={remainingRecipes}
-                      isPremium={isAuthenticated && plan === 'premium'}
-                    />
-                  </div>
-                </div>
-              </div>
-            </motion.section>
-          )}
-        </AnimatePresence>
-
-        {/* CTA to access recipes for authenticated users */}
-        {isAuthenticated && !showRecipeSection && showCTA && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="container mx-auto px-4 py-8"
-          >
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/5 via-muted/50 to-accent/5 border border-border/50 p-8">
-              {/* Close button */}
-              <button
-                onClick={() => setShowCTA(false)}
-                className="absolute top-3 right-3 p-2 rounded-full bg-background/80 hover:bg-background text-muted-foreground hover:text-foreground transition-colors z-10"
-                aria-label={language === 'fr' ? 'Fermer' : 'Close'}
-              >
-                <X className="w-4 h-4" />
-              </button>
-              
-              {/* Decorative elements */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl" />
-              
-              <div className="relative flex flex-col md:flex-row items-center justify-center gap-6">
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20">
-                  <UtensilsCrossed className="w-10 h-10" />
-                </div>
-                <div className="text-center md:text-left">
-                  <h3 className="font-serif text-2xl font-bold text-foreground mb-2">
-                    {language === 'fr' ? 'Créez vos propres recettes' : 'Create your own recipes'}
-                  </h3>
-                  <p className="text-muted-foreground mb-4 max-w-md">
-                    {language === 'fr' 
-                      ? 'Générez des recettes personnalisées basées sur vos ingrédients disponibles'
-                      : 'Generate personalized recipes based on your available ingredients'}
-                  </p>
-                  <Button 
-                    onClick={() => setShowRecipeSection(true)}
-                    className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md shadow-primary/20 gap-2"
-                  >
-                    {language === 'fr' ? 'Commencer à cuisiner' : 'Start cooking'}
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+        {/* Native Ad for non-authenticated users */}
+        {!isAuthenticated && (
+          <div className="container mx-auto px-4 py-4">
+            <NativeAdBanner position="middle" />
+          </div>
         )}
+
+        {/* News & Inspiration Section - Secondary */}
+        <section className="border-t bg-muted/20">
+          <div className="container mx-auto px-4 py-8">
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <Newspaper className="w-5 h-5 text-muted-foreground" />
+              <h2 className="font-serif text-xl font-bold text-foreground">
+                {language === 'fr' ? 'Inspiration & Actualités' : 'Inspiration & News'}
+              </h2>
+            </div>
+            <NewsFeedSection 
+              onSignUpClick={() => setShowAuthModal(true)}
+              isAuthenticated={isAuthenticated}
+            />
+          </div>
+        </section>
       </main>
 
       {/* Chef Mode */}
