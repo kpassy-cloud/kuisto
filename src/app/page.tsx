@@ -76,6 +76,7 @@ export default function Home() {
   // Theme
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const [hydrationReady, setHydrationReady] = useState(false)
   
   // i18n
   const { t, language } = useI18n()
@@ -152,6 +153,8 @@ export default function Home() {
   // Initialize
   useEffect(() => {
     setMounted(true)
+    // Delay hydration ready to ensure client state is stable
+    const timer = setTimeout(() => setHydrationReady(true), 0)
     
     // Initialize guest session if not authenticated
     if (!isAuthenticated) {
@@ -194,6 +197,8 @@ export default function Home() {
         setRecipeGenerationCount(parseInt(storedCount, 10) || 0)
       }
     }
+    
+    return () => clearTimeout(timer)
   }, [isAuthenticated])
 
   // Show signup prompt based on engagement
@@ -764,23 +769,30 @@ export default function Home() {
                 </>
               )}
               
-              {isAuthenticated ? (
-                <UserMenu 
-                  onOpenPreferences={() => setShowPreferences(true)}
-                  onOpenHistory={() => setShowHistory(true)}
-                  onOpenSubscription={() => setShowSubscription(true)}
-                  isAdmin={isAdmin}
-                  onAdminStatusChange={checkAdminStatus}
-                />
+              {/* Auth Button with hydration protection */}
+              {mounted && hydrationReady ? (
+                isAuthenticated ? (
+                  <UserMenu 
+                    onOpenPreferences={() => setShowPreferences(true)}
+                    onOpenHistory={() => setShowHistory(true)}
+                    onOpenSubscription={() => setShowSubscription(true)}
+                    isAdmin={isAdmin}
+                    onAdminStatusChange={checkAdminStatus}
+                  />
+                ) : (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setShowAuthModal(true)}
+                    className="ml-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-md shadow-primary/20"
+                    suppressHydrationWarning
+                  >
+                    {language === 'fr' ? 'Connexion' : 'Sign in'}
+                  </Button>
+                )
               ) : (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => setShowAuthModal(true)}
-                  className="ml-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-md shadow-primary/20"
-                >
-                  {language === 'fr' ? 'Connexion' : 'Sign in'}
-                </Button>
+                // Placeholder during hydration to prevent mismatch
+                <div className="h-9 w-20 bg-muted rounded animate-pulse ml-2" />
               )}
               
               {mounted && (
