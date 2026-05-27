@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { 
   Search, ChefHat, Sparkles, UtensilsCrossed, Clock, Users, 
   Flame, Leaf, Fish, Drumstick, Egg, Apple, Carrot, Milk,
-  Plus, X, ArrowRight, Loader2
+  Plus, X, ArrowRight, Loader2, PartyPopper, Zap
 } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { soundEffects } from '@/lib/sounds'
@@ -503,49 +503,109 @@ export function CookingHero({
         </div>
 
         {/* Generate Button */}
-        <div className="text-center mb-8">
-          <Button
-            size="lg"
-            disabled={!canGenerate || isLoading}
-            onClick={onGenerate}
-            className={`
-              px-8 py-6 text-lg font-semibold
-              bg-gradient-to-r from-primary to-primary/90 
-              hover:from-primary/90 hover:to-primary
-              shadow-lg shadow-primary/30
-              transition-all duration-300
-              ${canGenerate ? 'animate-pulse-slow' : ''}
-            `}
+        <div className="text-center mb-8 relative">
+          {/* Confetti burst effect */}
+          {isLoading && (
+            <div className="absolute inset-0 pointer-events-none z-10">
+              {[...Array(40)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ 
+                    opacity: 1,
+                    scale: 0,
+                    x: '50%',
+                    y: '0%',
+                    rotate: 0
+                  }}
+                  animate={{ 
+                    opacity: [1, 1, 0],
+                    scale: [0, 1, 0.5],
+                    x: `${50 + (Math.random() - 0.5) * 200}%`,
+                    y: `${(Math.random() - 0.5) * 100}%`,
+                    rotate: Math.random() * 720 - 360
+                  }}
+                  transition={{ 
+                    duration: 1.5, 
+                    delay: i * 0.02,
+                    ease: "easeOut"
+                  }}
+                  className="absolute left-1/2 top-1/2 w-3 h-3"
+                  style={{
+                    backgroundColor: ['#fbbf24', '#f472b6', '#34d399', '#60a5fa', '#f97316', '#a78bfa', '#22d3ee'][i % 7],
+                    borderRadius: i % 3 === 0 ? '50%' : i % 3 === 1 ? '0' : '2px',
+                    transform: `rotate(${Math.random() * 45}deg)`
+                  }}
+                />
+              ))}
+            </div>
+          )}
+          
+          <motion.div
+            whileHover={canGenerate && !isLoading ? { scale: 1.02 } : {}}
+            whileTap={canGenerate && !isLoading ? { scale: 0.98 } : {}}
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                {language === 'fr' ? 'Génération en cours...' : 'Generating...'}
-              </>
-            ) : canGenerate ? (
-              <>
-                <Sparkles className="w-5 h-5 mr-2" />
-                {t('generateCount').replace('{count}', String(selectedIngredients.length))}
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </>
-            ) : (
-              <>
-                <UtensilsCrossed className="w-5 h-5 mr-2" />
-                {t('minIngredients')}
-              </>
-            )}
-          </Button>
+            <Button
+              size="lg"
+              disabled={!canGenerate || isLoading}
+              onClick={onGenerate}
+              className={`
+                px-10 py-7 text-lg font-bold rounded-full
+                transition-all duration-300 relative overflow-hidden
+                ${canGenerate 
+                  ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white shadow-xl shadow-pink-500/30 hover:shadow-pink-500/50' 
+                  : 'bg-muted text-muted-foreground'
+                }
+              `}
+              style={canGenerate ? {
+                backgroundSize: '200% 200%',
+                animation: 'gradient 3s ease infinite'
+              } : {}}
+            >
+              {/* Animated shine */}
+              {canGenerate && !isLoading && (
+                <motion.div
+                  animate={{ x: ['-100%', '200%'] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                />
+              )}
+              
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-6 h-6 mr-2 animate-spin" />
+                  {language === 'fr' ? 'Cuisson en cours...' : 'Cooking up recipes...'}
+                  <PartyPopper className="w-5 h-5 ml-2" />
+                </>
+              ) : canGenerate ? (
+                <>
+                  <Sparkles className="w-6 h-6 mr-2" />
+                  {t('generateCount').replace('{count}', String(selectedIngredients.length))}
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                  <Zap className="w-4 h-4 ml-1 text-yellow-300" />
+                </>
+              ) : (
+                <>
+                  <UtensilsCrossed className="w-5 h-5 mr-2" />
+                  {t('minIngredients')}
+                </>
+              )}
+            </Button>
+          </motion.div>
           
           {!isAuthenticated && (
-            <p className="text-sm text-muted-foreground mt-3">
-              {language === 'fr' ? 'Première recette gratuite ! ' : 'First recipe free! '}
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-sm text-muted-foreground mt-4"
+            >
+              {language === 'fr' ? '🎁 Première recette gratuite ! ' : '🎁 First recipe free! '}
               <button 
                 onClick={onSignUp}
                 className="text-primary hover:underline font-medium"
               >
                 {t('orSignUp')}
               </button>
-            </p>
+            </motion.p>
           )}
         </div>
 
@@ -578,6 +638,15 @@ export function CookingHero({
           </div>
         </div>
       </div>
+
+      {/* CSS Animations */}
+      <style jsx global>{`
+        @keyframes gradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+      `}</style>
     </section>
   )
 }
