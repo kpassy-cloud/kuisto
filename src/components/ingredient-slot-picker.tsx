@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, Plus, Check, Sparkles, Dice5, Zap } from 'lu
 interface Ingredient {
   id: string
   name: string
+  nameEn?: string
   emoji: string
   category: string
 }
@@ -400,29 +401,6 @@ export function IngredientSlotPicker({
 
   return (
     <div className="w-full relative">
-      {/* Casino light decorations */}
-      <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex gap-3">
-        {[...Array(7)].map((_, i) => (
-          <motion.div
-            key={i}
-            animate={{ 
-              opacity: [0.4, 1, 0.4],
-              scale: [0.7, 1.2, 0.7]
-            }}
-            transition={{ 
-              duration: 0.8,
-              delay: i * 0.15,
-              repeat: Infinity
-            }}
-            className="w-3 h-3 rounded-full shadow-lg"
-            style={{
-              backgroundColor: ['#fbbf24', '#f472b6', '#34d399', '#60a5fa', '#f97316', '#a78bfa', '#22d3ee'][i],
-              boxShadow: `0 0 10px ${['#fbbf24', '#f472b6', '#34d399', '#60a5fa', '#f97316', '#a78bfa', '#22d3ee'][i]}`
-            }}
-          />
-        ))}
-      </div>
-
       {/* Lucky message banner */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -628,7 +606,7 @@ export function IngredientSlotPicker({
                           textShadow: '0 2px 4px rgba(0,0,0,0.3)'
                         }}
                       >
-                        {ingredient.name}
+                        {language === 'en' && ingredient.nameEn ? ingredient.nameEn : ingredient.name}
                       </motion.span>
                     )}
 
